@@ -1,2 +1,2 @@
-# SoftwareEvolution_2014
+# SoftwareEvolution 2015
 Repository for the software evolution labwork.
