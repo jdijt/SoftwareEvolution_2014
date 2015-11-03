@@ -7,7 +7,7 @@ import lang::java::m3::Core;
 import lang::java::jdt::m3::Core;
 
 map[str,loc] projects = ("smallsql" : |project://smallsql0.21_src|
-						//,"hsqldb" :   |project://hsqldb-2.3.1|
+						,"hsqldb" :   |project://hsqldb-2.3.1|
 						);
 
 void main(){

@@ -64,5 +64,5 @@ str totalScore(real medium, real high, real veryHigh){
 
 map[loc,int] unitsByThreshHolds(map[loc,int] sizes, int lower, int upper) = (l : sizes[l] | l <- sizes, sizes[l] <= upper, sizes[l] >= lower); 
 
-//Match all non whitespace lines.
+
 map[loc,int] unitSizes(M3 model) = ( l : ( 0 | it + 1 | /\n/ := readFile(l)) | l <- methods(model));
