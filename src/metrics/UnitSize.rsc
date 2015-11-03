@@ -2,22 +2,15 @@ module metrics::UnitSize
 
 import Map;
 import Set;
-import IO;
 import util::Math;
 
-import lang::java::m3::Core;
 import lang::java::m3::AST;
-import lang::java::jdt::m3::Core;
 
-
-str unitSizesResult(M3 model) {
-	sizes = unitSizes(model);
+str unitSizesResult(map[loc,Declaration] units) {
+	sizes = unitSizes(units);
 	
-	//Some statistics:
 	totalSize = (0 | it + sizes[l] | l <- sizes);
 	maxSize = (0 | max(it, s) | s <- range(sizes));
-	minSize = (maxSize | min(it, s) | s <- range(sizes));
-	avgSize = totalSize / size(methods(model));
 	
 	//Threshold values are not given for unit Size in the SIG paper, using the values from unit Complexity for now.
 	lowRiskUnits =      unitsByThreshHolds(sizes, 0, 20);
@@ -31,14 +24,8 @@ str unitSizesResult(M3 model) {
 	veryHighRiskLocPerc = (0.0 | it + sizes[l] | l <- veryHighRiskUnits) / totalSize * 100;
 		
 	
-	
 	return 
-	"Total lloc in Units: <totalSize>
-	'Average Unit Size: <avgSize>
-	'Largest Unit: <maxSize>
-	'Smallest Unit: <minSize>
-	'
-	'Risk Profile:
+	"Risk Profile:
 	' Very High Risk: <veryHighRiskLocPerc>%
 	' High Risk: <highRiskLocPerc>%
 	' Medium Risk: <mediumRiskLocPerc>%
@@ -64,5 +51,4 @@ str totalScore(real medium, real high, real veryHigh){
 
 map[loc,int] unitsByThreshHolds(map[loc,int] sizes, int lower, int upper) = (l : sizes[l] | l <- sizes, sizes[l] <= upper, sizes[l] >= lower); 
 
-
-map[loc,int] unitSizes(M3 model) = ( l : ( 0 | it + 1 | /\n/ := readFile(l)) | l <- methods(model));
+map[loc,int] unitSizes(map[loc,Declaration] units) = ( l : ( 0 | it + 1 | /Statement _ := units[l]) | l <- units);
