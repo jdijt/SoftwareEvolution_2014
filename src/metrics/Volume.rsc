@@ -7,6 +7,7 @@ import String;
 import lang::java::m3::Core;
 import lang::java::jdt::m3::Core;
 
+import metrics::Metric;
 //Lines of code LOC
 //Man years  MY
 
@@ -32,6 +33,18 @@ public int countLOC(loc file){					// LOC in files
 	cleanLOC = cleanCode(file);
 	return size(cleanLOC);
 }
-public num countProjectLOC(M3 project){
-	return sum([countLOC(x) | x <- files(project) ]);
+public Metric countProjectLOC(M3 project){
+	locs = sum([countLOC(x) | x <- files(project) ]);
+	
+	if(locs > 1310000){
+		return simpleMetric("--");
+	} else if(locs > 655000){
+		return simpleMetric("-");
+	} else if(locs > 246000){
+		return simpleMetric("o");
+	} else if(locs > 66000){
+		return simpleMetric("+");
+	} else {
+		return simpleMetric("++");
+	}
 }

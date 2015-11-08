@@ -6,6 +6,7 @@ import lang::java::m3::Core;
 import lang::java::jdt::m3::Core;
 
 import metrics::Unit;
+import metrics::Volume;
 import metrics::Metric;
 
 map[str,loc] projects = ("smallsql" : |project://smallsql0.21_src|
@@ -33,7 +34,8 @@ map[str,Metric] getProjectMetrics(loc proj){
 	//get AST for each method for the method-specific metrics.
 	methodASTs = (l : getMethodASTEclipse(l, model = projectModel) | l <- methods(projectModel));
 	
-	metrics = unitMetrics(methodASTs);
+	metrics = ("Volume" : countProjectLOC(projectModel));
+	metrics += unitMetrics(methodASTs);
 	
 	return metrics;
 } 
