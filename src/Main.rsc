@@ -4,38 +4,38 @@ import IO;
 import util::Math;
 import lang::java::m3::Core;
 import lang::java::jdt::m3::Core;
+import lang::java::jdt::m3::AST;
 
 import metrics::Unit;
 import metrics::Volume;
 import metrics::Metric;
 
 map[str,loc] projects = ("smallsql" : |project://smallsql0.21_src|
-						//,"hsqldb" :   |project://hsqldb-2.3.1| //For now we pretend hsqldb does not exist.
+						,"hsqldb" :   |project://hsqldb-2.3.1|
 						);
 
 public void main(){
 	for(p <- projects){
 		println("
-				'###########################
-				'Calculating metrics for <p>");
+				'########################### Calculating metrics for <p>");
 		
-		metrics = getProjectMetrics(projects[p]);
-		for(m <- metrics){
-			println("
-					'######
-					'<m>:");
-			println(formatMetric(metrics[m]));
-		}
+		metrics = getProjectMetrics(createM3FromEclipseProject(projects[p]), createAstsFromEclipseProject(project[p]));
+		printMetrics(metrics);
 	}
 }
 
-private map[str,Metric] getProjectMetrics(loc proj){
-	projectModel = createM3FromEclipseProject(proj);
-	//get AST for each method for the method-specific metrics.
-	methodASTs = (l : getMethodASTEclipse(l, model = projectModel) | l <- methods(projectModel));
+public void printMetrics(map[str,Metric] metrics){
+	for(m <- metrics){
+		println("
+				'###### <m>:");
+		println(formatMetric(metrics[m]));
+	}
+}
+
+public map[str,Metric] getProjectMetrics(M3 projectModel, set[Declaration] projectASTs){
 	
 	metrics = ("Volume" : countProjectLOC(projectModel));
-	metrics += unitMetrics(methodASTs);
+	metrics += unitMetrics(projectASTs);
 	
 	return metrics;
 } 

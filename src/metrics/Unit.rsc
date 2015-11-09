@@ -3,14 +3,20 @@ module metrics::Unit
 import List;
 import Map;
 import util::Math;
+import lang::java::m3::Core;
 import lang::java::m3::AST;
+import lang::java::jdt::m3::Core;
 
 import metrics::Metric;
 import metrics::UnitComplexity;
 import metrics::UnitSize;
 import localUtils::LocalUtils;
 
-public map[str, Metric] unitMetrics(map[loc,Declaration] unitASTs){
+
+public map[str, Metric] unitMetrics(set[Declaration] projectASTs){
+	unitASTs = getUnitASTs(projectASTs);
+	skipped = 0;
+	
 	sizes = unitSizes(unitASTs);
 	complexities = unitComplexities(unitASTs);
 	
@@ -35,7 +41,19 @@ public map[str, Metric] unitMetrics(map[loc,Declaration] unitASTs){
 		);
 		
 	return (
-		"Unit Size" : complexMetric(rpToTotalScore(sizeRisks), sizeRisks)
-		,"Unit Complexity" : complexMetric(rpToTotalScore(complexityRisks), complexityRisks)
+		"Unit Size" : unitMetric(rpToTotalScore(sizeRisks), skipped, sizeRisks)
+		,"Unit Complexity" : unitMetric(rpToTotalScore(complexityRisks), skipped, complexityRisks)
 		);
+}
+
+public map[loc,Declaration] getUnitASTs(set[Declaration] projectASTs){
+	unitASTs = ();
+	
+	//Only extract methods with an implementation or if they are constructors.
+	visit(projectASTs){
+		case m: \method(_,_,_,_,_): unitASTs[m@src] = m;
+		case c: \constructor(_,_,_,_): unitASTs[c@src] = c;
+	}
+	
+	return unitASTs;
 }
