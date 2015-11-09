@@ -3,15 +3,13 @@ module metrics::UnitComplexity
 import List;
 import lang::java::m3::AST;
 
-import metrics::Metric;
-
-map[loc,int] unitComplexities(map[loc,Declaration] units) = (l : cyclomaticComplexity(units[l]) | l <- units);
+public map[loc,int] unitComplexities(map[loc,Declaration] units) = (l : cyclomaticComplexity(units[l]) | l <- units);
 
 //CC equals: edges - nodes + 2.
 //So CC can be calculated by measuring the number of branching nodes 
 // & the amount of additional branches they create and then  adding 2.
 //See: http://www.literateprogramming.com/mccabe.pdf
-int cyclomaticComplexity(Declaration unit){
+private int cyclomaticComplexity(Declaration unit){
 	cc = 1; //Start at 1;
 	
 	visit(unit){

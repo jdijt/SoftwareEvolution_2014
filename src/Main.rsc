@@ -13,7 +13,7 @@ map[str,loc] projects = ("smallsql" : |project://smallsql0.21_src|
 						//,"hsqldb" :   |project://hsqldb-2.3.1| //For now we pretend hsqldb does not exist.
 						);
 
-void main(){
+public void main(){
 	for(p <- projects){
 		println("
 				'###########################
@@ -29,7 +29,7 @@ void main(){
 	}
 }
 
-map[str,Metric] getProjectMetrics(loc proj){
+private map[str,Metric] getProjectMetrics(loc proj){
 	projectModel = createM3FromEclipseProject(proj);
 	//get AST for each method for the method-specific metrics.
 	methodASTs = (l : getMethodASTEclipse(l, model = projectModel) | l <- methods(projectModel));

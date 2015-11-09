@@ -10,7 +10,7 @@ import metrics::UnitComplexity;
 import metrics::UnitSize;
 import localUtils::LocalUtils;
 
-map[str, Metric] unitMetrics(map[loc,Declaration] unitASTs){
+public map[str, Metric] unitMetrics(map[loc,Declaration] unitASTs){
 	sizes = unitSizes(unitASTs);
 	complexities = unitComplexities(unitASTs);
 	
