@@ -8,34 +8,41 @@ import lang::java::jdt::m3::AST;
 
 import metrics::Unit;
 import metrics::Volume;
+import metrics::Volume2;
 import metrics::Metric;
 
-map[str,loc] projects = ("smallsql" : |project://smallsql0.21_src|
-						,"hsqldb" :   |project://hsqldb-2.3.1|
-						);
+list[tuple[str,loc]] projects = [<"smallsql", |project://smallsql0.21_src|>
+								,<"hsqldb",   |project://hsqldb-2.3.1|>
+								];
 
-public void main(){
+
+public void main() = printMetrics([<p[0], getProjectMetrics(p[1])> | p <- projects]);
+
+
+public void printMetrics(list[tuple[str,list[tuple[str,Metric]]]] projects){
 	for(p <- projects){
 		println("
-				'########################### Calculating metrics for <p>");
-		
-		metrics = getProjectMetrics(createM3FromEclipseProject(projects[p]), createAstsFromEclipseProject(project[p]));
-		printMetrics(metrics);
+				'########################### Metrics for <p[0]>");
+		for(m <-p[1]){
+			println("
+					'###### <m[0]>:");
+			println(formatMetric(m[1]));
+		}
 	}
 }
 
-public void printMetrics(map[str,Metric] metrics){
-	for(m <- metrics){
-		println("
-				'###### <m>:");
-		println(formatMetric(metrics[m]));
-	}
-}
-
-public map[str,Metric] getProjectMetrics(M3 projectModel, set[Declaration] projectASTs){
+public list[tuple[str,Metric]] getProjectMetrics(loc project){
+	projectModel = createM3FromEclipseProject(project);
+	projectASTs = createAstsFromEclipseProject(project, false); //Resolving bindings causes stackoverflows, don't do this ;).
 	
-	metrics = ("Volume" : countProjectLOC(projectModel));
-	metrics += unitMetrics(projectASTs);
+	//volume = countProjectLOC(projectModel);
+	volume2 = countProjectLOC2(projectModel);
+	<unitSize, unitComplexity> = unitMetrics(projectASTs);
 	
-	return metrics;
+	return [
+		//<"Volume",volume>
+		<"Volume",volume2>
+		,<"Unit Size",unitSize>
+		,<"Unit Complexity",unitComplexity>
+		];
 } 

@@ -3,12 +3,15 @@ module metrics::UnitComplexity
 import List;
 import lang::java::m3::AST;
 
-public map[loc,int] unitComplexities(map[loc,Declaration] units) = (l : cyclomaticComplexity(units[l]) | l <- units);
+public rel[loc,int] unitComplexities(rel[loc,Declaration] units) = {<l, cyclomaticComplexity(ast)> | <l,ast> <- units};
 
 //CC equals: edges - nodes + 2.
 //So CC can be calculated by measuring the number of branching nodes 
 // & the amount of additional branches they create and then  adding 2.
 //See: http://www.literateprogramming.com/mccabe.pdf
+
+//This implementation assumes the given unit has a CC of 1 (no branching statements).
+//Then as it traverses the units AST branching statements (i.e. additional paths) are counted.
 private int cyclomaticComplexity(Declaration unit){
 	cc = 1; //Start at 1;
 	
@@ -33,8 +36,9 @@ private int cyclomaticComplexity(Declaration unit){
 		case \try(_,catches): cc += size(catches);
 		case \try(_,catches,_): cc += size(catches);
 		//assert: paths: continue, or throw exception.
-		//Not counting these for now, as they do not include function complexity.
-		//But rather, serve as a tool to manage this.
+		//Not counting these for now. These do increase function complexity from the CC point of view.
+		//However, assert is a tool for checking assumptions that is MEANT to manage complexity.
+		//So it seems wrong to penalize functions for including asserts.
 		//case \assert(_): cc += 1;
 		//case \assert(_,_): cc += 1;
 	}
