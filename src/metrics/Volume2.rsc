@@ -32,8 +32,7 @@ public int countFileLoc(list[str] lines, map[int,set[LineAction]] lineActions){
 			}
 		}
 		
-		if(trim(l) != ""){ //ignore empty lines.
-			println(l);
+		if(trim(l) != ""){ //ignore whitespace-only lines.
 			locs += 1;
 		}
 		line += 1;
