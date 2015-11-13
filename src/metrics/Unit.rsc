@@ -10,7 +10,6 @@ import lang::java::m3::AST;
 import metrics::Metric;
 import metrics::UnitComplexity;
 import metrics::UnitSize;
-import localUtils::LocalUtils;
 
 
 public tuple[Metric,Metric] unitMetrics(set[Declaration] projectASTs){
