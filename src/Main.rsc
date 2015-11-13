@@ -9,7 +9,9 @@ import lang::java::jdt::m3::AST;
 import metrics::Unit;
 import metrics::Volume;
 import metrics::Volume2;
+import metrics::Duplicate;
 import metrics::Metric;
+
 
 list[tuple[str,loc]] projects = [<"smallsql", |project://smallsql0.21_src|>
 								,<"hsqldb",   |project://hsqldb-2.3.1|>
@@ -46,3 +48,4 @@ public list[tuple[str,Metric]] getProjectMetrics(loc project){
 		,<"Unit Complexity",unitComplexity>
 		];
 } 
+
