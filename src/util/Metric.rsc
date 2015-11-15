@@ -1,12 +1,17 @@
-module metrics::Metric
+module util::Metric
 
 import List;
 import String;
+import Relation;
 import util::Math;
 
 data Score = sc(int score);
 
-data Metric = simpleMetric(Score score, num val) | unitMetric(Score score, RiskProfile rp);
+data Metric = simpleMetric(str name, Score score, num val) 
+			| unitMetric(str name, Score score, RiskProfile rp)
+			| aggMetric(str name, Score score)
+			;
+			
 
 data RiskProfile = riskProfile(real veryHigh, real high, real medium, real low);
 
@@ -21,15 +26,29 @@ public str formatScore(sc(1)) = "+";
 public str formatScore(sc(2)) = "++";
 public str formatScore(sc(i)) = "unknown score: <i>";
 
-public str formatMetric(simpleMetric(score, val)) = 
-	"Score: <formatScore(score)>
-	'Value: <val>";
+public str formatMetric(simpleMetric(name, score, int val)) = 
+	"###### <name>
+	'Score: <formatScore(score)>
+	'Value: <val>
+	'";
+public str formatMetric(simpleMetric(name, score, real val)) = 
+	"###### <name>
+	'Score: <formatScore(score)>
+	'Value: <round(val)>%
+	'";
 
-public str formatMetric(unitMetric(score, rp)) = 
-	"Score: <formatScore(score)>
+public str formatMetric(unitMetric(name, score, rp)) = 
+	"###### <name>
+	'Score: <formatScore(score)>
 	'## Risk Profile:  
-	'  <formatRiskProfile(rp)>";
-											
+	'  <formatRiskProfile(rp)>
+	'";
+	
+public str formatMetric(aggMetric(name, score)) = 
+	"###### <name>
+	'Score: <formatScore(score)>
+	'";
+		
 public str formatRiskProfile(riskProfile(vh, h, m, l)) =
 	"Very High: <round(vh)>%
 	'High:      <round(h)>%
@@ -37,7 +56,65 @@ public str formatRiskProfile(riskProfile(vh, h, m, l)) =
 	'Low:       <round(l)>%";
 
 
-public Score rpToTotalScore(RiskProfile rp){
+public Metric volumeToMetric(int locs){
+	if(locs > 1310000){
+		return simpleMetric("Volume", sc(-2), locs);
+	} else if(locs > 655000){
+		return simpleMetric("Volume", sc(-1), locs);
+	} else if(locs > 246000){
+		return simpleMetric("Volume", sc(0), locs);
+	} else if(locs > 66000){
+		return simpleMetric("Volume", sc(1), locs);
+	} else {
+		return simpleMetric("Volume", sc(2), locs);
+	}
+}
+
+public Metric duplicatelinesToMetric(int dupLocs, int locs){
+	dupPerc = toReal(dupLocs)/locs * 100;
+	
+	if(dupPerc > 20){
+		return simpleMetric("Duplication", sc(-2), dupPerc);
+	} else if(dupPerc > 10){
+		return simpleMetric("Duplication", sc(-1), dupPerc);
+	} else if(dupPerc > 5){
+		return simpleMetric("Duplication", sc(0), dupPerc);
+	} else if(dupPerc > 3){
+		return simpleMetric("Duplication", sc(1), dupPerc);
+	} else {
+		return simpleMetric("Duplication", sc(2), dupPerc);
+	}
+}
+
+public Metric unitSizesToMetric(rel[loc,int] sizes){
+	totalUnitLoc = sum([size | <_,size> <- sizes]);
+	
+	//Risk profile for sizes:
+	sizeRisks = riskProfile(
+		toReal(sum([i | <_,i> <- rangeX(sizes, {n | n <- [0..101]})]))/totalUnitLoc * 100   //very high
+		,toReal(sum([i | <_,i> <- rangeR(sizes, {n | n <- [51..101]})]))/totalUnitLoc * 100 //high
+		,toReal(sum([i | <_,i> <- rangeR(sizes, {n | n <- [21..51]})]))/totalUnitLoc * 100  //medium
+		,toReal(sum([i | <_,i> <- rangeR(sizes, {n | n <- [0..21]})]))/totalUnitLoc * 100   //low
+		);
+	
+	return unitMetric("Unit Size", rpToTotalScore(sizeRisks),sizeRisks);
+}
+
+public Metric unitComplexitiesToMetric(rel[loc,int] complexities, rel[loc,int] sizes){
+	totalUnitLoc = sum([size | <_,size> <- sizes]);
+	
+	complexityRisks = riskProfile(
+		toReal(sum([i | <_,i> <- domainR(sizes, domain(rangeX(complexities, {n | n <- [0..51]})))])) / totalUnitLoc * 100   //very high
+		,toReal(sum([i | <_,i> <- domainR(sizes, domain(rangeR(complexities, {n | n <- [21..51]})))])) / totalUnitLoc * 100 //high
+		,toReal(sum([i | <_,i> <- domainR(sizes, domain(rangeR(complexities, {n | n <- [11..21]})))])) / totalUnitLoc * 100 //medium
+		,toReal(sum([i | <_,i> <- domainR(sizes, domain(rangeR(complexities, {n | n <- [1..11]})))])) / totalUnitLoc * 100  //low
+		);
+		
+	
+	return unitMetric("Unit Complexity", rpToTotalScore(complexityRisks),complexityRisks);
+}
+
+private Score rpToTotalScore(RiskProfile rp){
 	if(rp.veryHigh > 5 || rp.high > 15 || rp.medium > 50){
 		return sc(-2);
 	} else if(rp.veryHigh > 0 || rp.high > 10 || rp.medium > 40){
