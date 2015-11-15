@@ -27,26 +27,22 @@ public str formatScore(sc(2)) = "++";
 public str formatScore(sc(i)) = "unknown score: <i>";
 
 public str formatMetric(simpleMetric(name, score, int val)) = 
-	"###### <name>
-	'Score: <formatScore(score)>
+	"###### <name>: <formatScore(score)>
 	'Value: <val>
 	'";
 public str formatMetric(simpleMetric(name, score, real val)) = 
-	"###### <name>
-	'Score: <formatScore(score)>
+	"###### <name>: <formatScore(score)>
 	'Value: <round(val)>%
 	'";
 
 public str formatMetric(unitMetric(name, score, rp)) = 
-	"###### <name>
-	'Score: <formatScore(score)>
+	"###### <name>: <formatScore(score)>
 	'## Risk Profile:  
 	'  <formatRiskProfile(rp)>
 	'";
 	
 public str formatMetric(aggMetric(name, score)) = 
-	"###### <name>
-	'Score: <formatScore(score)>
+	"###### <name>: <formatScore(score)>
 	'";
 		
 public str formatRiskProfile(riskProfile(vh, h, m, l)) =
@@ -91,10 +87,10 @@ public Metric unitSizesToMetric(rel[loc,int] sizes){
 	
 	//Risk profile for sizes:
 	sizeRisks = riskProfile(
-		toReal(sum([i | <_,i> <- rangeX(sizes, {n | n <- [0..101]})]))/totalUnitLoc * 100   //very high
-		,toReal(sum([i | <_,i> <- rangeR(sizes, {n | n <- [51..101]})]))/totalUnitLoc * 100 //high
-		,toReal(sum([i | <_,i> <- rangeR(sizes, {n | n <- [21..51]})]))/totalUnitLoc * 100  //medium
-		,toReal(sum([i | <_,i> <- rangeR(sizes, {n | n <- [0..21]})]))/totalUnitLoc * 100   //low
+		toReal(sum([0]+[i | <_,i> <- rangeX(sizes, {n | n <- [0..101]})]))/totalUnitLoc * 100   //very high
+		,toReal(sum([0]+[i | <_,i> <- rangeR(sizes, {n | n <- [51..101]})]))/totalUnitLoc * 100 //high
+		,toReal(sum([0]+[i | <_,i> <- rangeR(sizes, {n | n <- [21..51]})]))/totalUnitLoc * 100  //medium
+		,toReal(sum([0]+[i | <_,i> <- rangeR(sizes, {n | n <- [0..21]})]))/totalUnitLoc * 100   //low
 		);
 	
 	return unitMetric("Unit Size", rpToTotalScore(sizeRisks),sizeRisks);
@@ -104,10 +100,10 @@ public Metric unitComplexitiesToMetric(rel[loc,int] complexities, rel[loc,int] s
 	totalUnitLoc = sum([size | <_,size> <- sizes]);
 	
 	complexityRisks = riskProfile(
-		toReal(sum([i | <_,i> <- domainR(sizes, domain(rangeX(complexities, {n | n <- [0..51]})))])) / totalUnitLoc * 100   //very high
-		,toReal(sum([i | <_,i> <- domainR(sizes, domain(rangeR(complexities, {n | n <- [21..51]})))])) / totalUnitLoc * 100 //high
-		,toReal(sum([i | <_,i> <- domainR(sizes, domain(rangeR(complexities, {n | n <- [11..21]})))])) / totalUnitLoc * 100 //medium
-		,toReal(sum([i | <_,i> <- domainR(sizes, domain(rangeR(complexities, {n | n <- [1..11]})))])) / totalUnitLoc * 100  //low
+		toReal(sum([0]+[i | <_,i> <- domainR(sizes, domain(rangeX(complexities, {n | n <- [0..51]})))])) / totalUnitLoc * 100   //very high
+		,toReal(sum([0]+[i | <_,i> <- domainR(sizes, domain(rangeR(complexities, {n | n <- [21..51]})))])) / totalUnitLoc * 100 //high
+		,toReal(sum([0]+[i | <_,i> <- domainR(sizes, domain(rangeR(complexities, {n | n <- [11..21]})))])) / totalUnitLoc * 100 //medium
+		,toReal(sum([0]+[i | <_,i> <- domainR(sizes, domain(rangeR(complexities, {n | n <- [1..11]})))])) / totalUnitLoc * 100  //low
 		);
 		
 	
@@ -141,12 +137,16 @@ public test bool testFormatSc2() = formatScore(sc(1337)) == "unknown score: 1337
 
 //Check basic components of output.
 public test bool testFormatMetric1(){
-	result = formatMetric(simpleMetric(sc(0),0));
-	return startsWith(result, "Score: ") &&  contains(result, "Value: 0");
+	result = formatMetric(simpleMetric("Foo",sc(0),0));
+	return startsWith(result, "###### Foo: ") &&  contains(result, "Value: 0");
 }
 public test bool testFormatMetric2(){
-	result = formatMetric(unitMetric(sc(0),riskProfile(0.0,0.0,0.0,0.0)));
-	return startsWith(result, "Score: ") &&  contains(result, "## Risk Profile:");
+	result = formatMetric(unitMetric("Foo", sc(0),riskProfile(0.0,0.0,0.0,0.0)));
+	return startsWith(result, "###### Foo: ") &&  contains(result, "## Risk Profile:");
+}
+public test bool testFormatMetric3(){
+	result = formatMetric(aggMetric("Foo", sc(0)));
+	return startsWith(result, "###### Foo: ");
 }
 //Check for size, rounding and order.
 public test bool testFormatRiskProfile(){

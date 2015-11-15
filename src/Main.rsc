@@ -21,8 +21,9 @@ public void main(M3 project){
 	analys = aggMetric("Analysability", avg([vol.score, dup.score, uSize.score]));
 	change = aggMetric("Changeability", avg([uComp.score, dup.score]));
 	testab = aggMetric("Testability", avg([uComp.score, uSize.score]));
+	maint =  aggMetric("Maintainability", avg([analys.score, change.score, testab.score]));
 	
-	printMetrics([vol,uSize,uComp,dup,analys,change,testab]);
+	printMetrics([vol,uSize,uComp,dup,analys,change,testab,maint]);
 }
 
 

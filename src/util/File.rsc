@@ -20,7 +20,6 @@ public map[loc,list[str]] getCleanedProjectFileLines(M3 project){
 	return (file : getCleanedLinesFromFile(file, project@documentation[file+containment_T[file]]) | file <- files(project));
 }
 
-//Turns the location of comments in a file into a set of actions per line.
 private list[str] getCleanedLinesFromFile(loc f, set[loc] commentLocs){
 	lineActions = getCommentLineActions(commentLocs);
 	line = 1;
@@ -36,16 +35,19 @@ private list[str] getCleanedLinesFromFile(loc f, set[loc] commentLocs){
 				case delSegment(s,e) : l = left(l[..s],size(l[..e+1]))+l[e+1..];
 			}
 		}
-
+		//Remove preceding / trailing whitespace, squueze whitespace in between words to one."
 		l = trim(l);
 		if(l != ""){ //ignore empty lines;
+			//Squeeze all sequences of tabs and strings into single spaces.
+			l = squeeze(replaceAll(l,"\t"," ")," ");
 			append l;
 		}
 			
 		line += 1;
 	}
 }
- 
+
+//Turns the location of comments in a file into a set of actions per line.
 private map[int,set[LineAction]] getCommentLineActions(set[loc] commentLocs){
 	commentLines = {};
 	for(l <- commentLocs){
@@ -60,3 +62,9 @@ private map[int,set[LineAction]] getCommentLineActions(set[loc] commentLocs){
 	}
 	return toMap(commentLines);
 }
+
+//Test Code:
+public test bool getCLA_empty() = getCommentLineActions({}) == ();
+public test bool getCLA_singleline() = getCommentLineActions({|project://series1/src/util/Metric|(0,0,<50,2>,<50,10>)}) == (50:{delSegment(2,10)});
+public test bool getCLA_multiline() = getCommentLineActions({|project://series1/src/util/Metric|(0,0,<50,2>,<52,10>)}) == (50:{delFrom(2)}, 51:{delWhole()}, 52:{delUpTo(10)});
+ 
