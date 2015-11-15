@@ -43,15 +43,15 @@ public Metric countProjectLOC(M3 project){
 	duplicateIndex = getDuplicateIndex(codeList, locs);
 	
 	if(locs > 1310000){
-		return simpleMetric("--");
+		return simpleMetric(sc(-2), locs);
 	} else if(locs > 655000){
-		return simpleMetric("-");
+		return simpleMetric(sc(-1), locs);
 	} else if(locs > 246000){
-		return simpleMetric("o");
+		return simpleMetric(sc(0), locs);
 	} else if(locs > 66000){
-		return simpleMetric("+");
+		return simpleMetric(sc(1), locs);
 	} else {
-		return simpleMetric("++");
+		return simpleMetric(sc(2), locs);
 	}
 	
 	

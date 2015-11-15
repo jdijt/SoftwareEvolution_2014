@@ -49,4 +49,3 @@ public int findDuplicates(list[str] listB) {
 	listBEndPos    =0;
 	checkedN       =0;
 }
-
