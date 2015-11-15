@@ -4,38 +4,54 @@ import IO;
 import util::Math;
 import lang::java::m3::Core;
 import lang::java::jdt::m3::Core;
+import lang::java::jdt::m3::AST;
 
-import metrics::Unit;
-import metrics::Volume;
-import metrics::Metric;
+import util::File;
+import util::AST;
+import util::Metric;
+import metrics::Volume2;
+import metrics::UnitSize;
+import metrics::UnitComplexity;
+import metrics::Duplicate2;
 
-map[str,loc] projects = ("smallsql" : |project://smallsql0.21_src|
-						//,"hsqldb" :   |project://hsqldb-2.3.1| //For now we pretend hsqldb does not exist.
-						);
 
-void main(){
-	for(p <- projects){
-		println("
-				'###########################
-				'Calculating metrics for <p>");
-		
-		metrics = getProjectMetrics(projects[p]);
-		for(m <- metrics){
-			println("
-					'######
-					'<m>:");
-			println(formatMetric(metrics[m]));
-		}
+
+public void main(M3 project){
+	<vol,uSize,uComp,dup> = getCodeMetrics(project);
+	analys = aggMetric("Analysability", avg([vol.score, dup.score, uSize.score]));
+	change = aggMetric("Changeability", avg([uComp.score, dup.score]));
+	testab = aggMetric("Testability", avg([uComp.score, uSize.score]));
+	maint =  aggMetric("Maintainability", avg([analys.score, change.score, testab.score]));
+	
+	printMetrics([vol,uSize,uComp,dup,analys,change,testab,maint]);
+}
+
+
+public void printMetrics(list[Metric] metrics){
+	println("########################### Metrics:");
+	for(m <- metrics){
+		println(formatMetric(m));
 	}
 }
 
-map[str,Metric] getProjectMetrics(loc proj){
-	projectModel = createM3FromEclipseProject(proj);
-	//get AST for each method for the method-specific metrics.
-	methodASTs = (l : getMethodASTEclipse(l, model = projectModel) | l <- methods(projectModel));
+public tuple[Metric, Metric, Metric, Metric] getCodeMetrics(M3 projectModel){
+	projectASTs = createAstsFromEclipseProject(projectModel.id, false); //Resolving bindings causes stackoverflows, don't do this ;).
 	
-	metrics = ("Volume" : countProjectLOC(projectModel));
-	metrics += unitMetrics(methodASTs);
+	projectFiles = getCleanedProjectFileLines(projectModel);
+	unitASTs = getUnitASTs(projectASTs);
 	
-	return metrics;
+	volume = countFileLOC(projectFiles);
+	sizes = unitSizes(unitASTs);
+	complexities = unitComplexities(unitASTs);
+	duplicateLines = getDuplicateLineCount(projectFiles);
+
+
+	//Now, for scores:
+	return 
+		<volumeToMetric(volume)
+		,unitSizesToMetric(sizes)
+		,unitComplexitiesToMetric(complexities, sizes)
+		,duplicatelinesToMetric(duplicateLines,volume)
+		>;
 } 
+

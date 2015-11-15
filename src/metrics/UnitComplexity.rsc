@@ -3,15 +3,15 @@ module metrics::UnitComplexity
 import List;
 import lang::java::m3::AST;
 
-import metrics::Metric;
+public rel[loc,int] unitComplexities(rel[loc,Declaration] units) = {<l, cyclomaticComplexity(ast)> | <l,ast> <- units};
 
-map[loc,int] unitComplexities(map[loc,Declaration] units) = (l : cyclomaticComplexity(units[l]) | l <- units);
-
-//CC equals: edges - nodes + 2.
-//So CC can be calculated by measuring the number of branching nodes 
-// & the amount of additional branches they create and then  adding 2.
+//CC equals: edges - nodes + 2 in the control flow graph.
 //See: http://www.literateprogramming.com/mccabe.pdf
-int cyclomaticComplexity(Declaration unit){
+
+//This implementation assumes the given unit has a CC of 1, i.e. it looks like this O --> O --> O --> O, or, simplified: O --> O.
+//The cc for a method like that is 1 (n - (n+1) + 2 == 1), because it always has 1 more node than it has edges.
+//Every branching statement extends this graph with 2 edges and 1 node, thus increasing the CC by 1.
+private int cyclomaticComplexity(Declaration unit){
 	cc = 1; //Start at 1;
 	
 	visit(unit){
@@ -29,17 +29,41 @@ int cyclomaticComplexity(Declaration unit){
 		case \do(_,_): cc += 1;
 		//for: paths: execute loop body, or skip and continue;
 		case \for(_,_,_): cc += 1;
-		//forEach: paths: execute loop body, or skip and continue (on empty list);
-		case \forEach(_,_,_): cc += 1;
-		//try: paths: body, and one for every catch block
-		case \try(_,catches): cc += size(catches);
-		case \try(_,catches,_): cc += size(catches);
-		//assert: paths: continue, or throw exception.
-		//Not counting these for now, as they do not include function complexity.
-		//But rather, serve as a tool to manage this.
-		//case \assert(_): cc += 1;
-		//case \assert(_,_): cc += 1;
+		case \for(_,_,_,_): cc += 1;
+		//foreach: paths: execute loop body, or skip and continue (on empty list);
+		case \foreach(_,_,_): cc += 1;
+		//the catches are the actual branching statement, so count 1 branch per catch.
+		case \try(_,[*C]): cc += size(C);
+		case \try(_,[*C],_): cc += size(C);
 	}
 	
 	return cc;
 }
+
+////Some testdata:
+private Declaration abstractMethod = \method(\int(), "testMethod", [], []);
+private Declaration emptyMethod	   = \method(\int(), "testMethod", [], [], \empty());
+private Declaration simpleMethod   = \method(\int(), "testMethod", [], [], \block([\empty() | i <- [0..19]]));
+private Declaration complexMethod   = \method(\int(), "testMethod", [], []
+									 ,\block([
+									 	\if(\booleanLiteral(true), \empty())                                        //2
+									 	,\if(\booleanLiteral(true), \empty(),\empty())                              //3
+									 	,\try(\empty(),[\catch(\parameter(\int(),"",0),\empty()) | i <- [0..10]])   //13
+									  	,\while(\booleanLiteral(true), \empty())                                    //14
+									  	,\do(\empty(),\booleanLiteral(true))                                        //15
+									  	,\case(\booleanLiteral(true))                                               //16
+									  	,\for([],\null(),[],\empty())                                               //17
+									  	,\for([],[],\empty())                                                       //18
+									  	,\foreach(\parameter(\int(),"",0),\null(),\empty())                         //19
+									  	,\expressionStatement(\conditional(\null(),\null(),\null()))                //20
+									 ]));
+
+//some tests for unitComplexities:
+public test bool testUnitComplexities_emptyRel() = unitComplexities({}) == {};
+public test bool testUnitComplexities_nonEmpty() = unitComplexities({<|project://foo|,emptyMethod>}) == {<|project://foo|,1>};
+
+//some tests for cyclomaticComplexity:
+public test bool testCycloComp_abstract() = cyclomaticComplexity(abstractMethod) == 1;
+public test bool testCycloComp_empty() = cyclomaticComplexity(emptyMethod) == 1;
+public test bool testCycloComp_simple() = cyclomaticComplexity(simpleMethod) == 1;
+public test bool testCycloComp_complex() = cyclomaticComplexity(complexMethod) == 20;
