@@ -31,6 +31,7 @@ public void printMetrics(list[tuple[str,list[tuple[str,Metric]]]] projects){
 			println(formatMetric(m[1]));
 		}
 	}
+	duplicateIndex = getDuplicateIndex(codeList);
 }
 
 public list[tuple[str,Metric]] getProjectMetrics(loc project){

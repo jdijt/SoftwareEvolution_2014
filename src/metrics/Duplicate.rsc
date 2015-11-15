@@ -3,13 +3,13 @@ module metrics::Duplicate
 import IO;
 import Prelude;
 
-list[str] listA = readFileLines(|file:///Users/Carla/workspace/series0/src/fruits.txt|);
-
-public void main(){
-	println("###########################");
-	duplicateIndex = findDuplicates(listA);
-	println("<duplicateIndex>");
-	println("###########################");
+public int getDuplicateIndex(listA,locs){
+	duplicate = findDuplicates(listA);
+	duplicateIndex = ((duplicate * 100) / locs);
+	println(" Volume locs <locs>");
+	println(" Duplicate locs <duplicate>");
+	println(" Duplicate Score <duplicateIndex>%");
+	return duplicateIndex; 
 }	
 
 public int findDuplicates(list[str] listB) {
@@ -49,4 +49,3 @@ public int findDuplicates(list[str] listB) {
 	listBEndPos    =0;
 	checkedN       =0;
 }
-
