@@ -10,7 +10,7 @@ public int getDuplicateLineCount(map[loc,list[str]] fileLines){
 	
 	for(f <- fileLines){
 		lines = fileLines[f];
-		lastMatch = -10; //Must be larger than slice size, otherwise we get false overlap in the first few lines.
+		lastMatch = -1;
 		
 		for(lineIdx <- [0..size(lines)-5]){
 			curSlice = lines[lineIdx..lineIdx+6];
@@ -19,7 +19,11 @@ public int getDuplicateLineCount(map[loc,list[str]] fileLines){
 			
 			if(sliceCount[curSlice] > 1){ //we have seen you before mr. Slice..
 				//Overlap correction: Reduce number of matched lines if last match less than 6 lines apart from current match.
-				dupLines += 6 - max(0, 6 - (lineIdx - lastMatch));		
+				overlap = 0;
+				if(lastMatch > -1){
+					overlap = max(0, 6 - (lineIdx - lastMatch));
+				}
+				dupLines += 6 - overlap; 		
 				lastMatch = lineIdx;
 			}
 		}
