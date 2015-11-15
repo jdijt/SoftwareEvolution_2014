@@ -91,10 +91,10 @@ public Metric unitSizesToMetric(rel[loc,int] sizes){
 	
 	//Risk profile for sizes:
 	sizeRisks = riskProfile(
-		toReal(sum([i | <_,i> <- rangeX(sizes, {n | n <- [0..101]})]))/totalUnitLoc * 100   //very high
-		,toReal(sum([i | <_,i> <- rangeR(sizes, {n | n <- [51..101]})]))/totalUnitLoc * 100 //high
-		,toReal(sum([i | <_,i> <- rangeR(sizes, {n | n <- [21..51]})]))/totalUnitLoc * 100  //medium
-		,toReal(sum([i | <_,i> <- rangeR(sizes, {n | n <- [0..21]})]))/totalUnitLoc * 100   //low
+		toReal(sum([0]+[i | <_,i> <- rangeX(sizes, {n | n <- [0..101]})]))/totalUnitLoc * 100   //very high
+		,toReal(sum([0]+[i | <_,i> <- rangeR(sizes, {n | n <- [51..101]})]))/totalUnitLoc * 100 //high
+		,toReal(sum([0]+[i | <_,i> <- rangeR(sizes, {n | n <- [21..51]})]))/totalUnitLoc * 100  //medium
+		,toReal(sum([0]+[i | <_,i> <- rangeR(sizes, {n | n <- [0..21]})]))/totalUnitLoc * 100   //low
 		);
 	
 	return unitMetric("Unit Size", rpToTotalScore(sizeRisks),sizeRisks);
@@ -104,10 +104,10 @@ public Metric unitComplexitiesToMetric(rel[loc,int] complexities, rel[loc,int] s
 	totalUnitLoc = sum([size | <_,size> <- sizes]);
 	
 	complexityRisks = riskProfile(
-		toReal(sum([i | <_,i> <- domainR(sizes, domain(rangeX(complexities, {n | n <- [0..51]})))])) / totalUnitLoc * 100   //very high
-		,toReal(sum([i | <_,i> <- domainR(sizes, domain(rangeR(complexities, {n | n <- [21..51]})))])) / totalUnitLoc * 100 //high
-		,toReal(sum([i | <_,i> <- domainR(sizes, domain(rangeR(complexities, {n | n <- [11..21]})))])) / totalUnitLoc * 100 //medium
-		,toReal(sum([i | <_,i> <- domainR(sizes, domain(rangeR(complexities, {n | n <- [1..11]})))])) / totalUnitLoc * 100  //low
+		toReal(sum([0]+[i | <_,i> <- domainR(sizes, domain(rangeX(complexities, {n | n <- [0..51]})))])) / totalUnitLoc * 100   //very high
+		,toReal(sum([0]+[i | <_,i> <- domainR(sizes, domain(rangeR(complexities, {n | n <- [21..51]})))])) / totalUnitLoc * 100 //high
+		,toReal(sum([0]+[i | <_,i> <- domainR(sizes, domain(rangeR(complexities, {n | n <- [11..21]})))])) / totalUnitLoc * 100 //medium
+		,toReal(sum([0]+[i | <_,i> <- domainR(sizes, domain(rangeR(complexities, {n | n <- [1..11]})))])) / totalUnitLoc * 100  //low
 		);
 		
 	
