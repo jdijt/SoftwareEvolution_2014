@@ -8,8 +8,11 @@ import lang::java::m3::Core;
 import lang::java::jdt::m3::Core;
 
 import metrics::Metric;
+import metrics::Duplicate;
 //Lines of code LOC
 //Man years  MY
+
+list[str]codeList;
 
 private str ignoreBlockComments(str lines){
 	return innermost visit(lines){
@@ -28,14 +31,16 @@ private list[str] cleanCode(str lines){
 	return ignoreEmptyLines([ignoreSingleLineComment(l) | l <- split("\n", tmp)]);
 }
 
-private int countLOC(loc file){					// LOC in files
+public int countLOC(loc file){					// LOC in files
 	file = readFile(file);
 	cleanLines = cleanCode(file);
+	codeList = addCodeToList(cleanLines);
 	return size(cleanLines);
 }
 
 public Metric countProjectLOC(M3 project){
-	locs = sum([countLOC(x) | x <- files(project) ]);
+	locs = sum([countLOC(x) | x <- files(project)]);
+	duplicateIndex = getDuplicateIndex(codeList, locs);
 	
 	if(locs > 1310000){
 		return simpleMetric("--");
@@ -48,4 +53,8 @@ public Metric countProjectLOC(M3 project){
 	} else {
 		return simpleMetric("++");
 	}
+	
+	
 }
+
+public list[str] addCodeToList(list[str] lines)= lines +lines;

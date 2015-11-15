@@ -20,7 +20,6 @@ public void main(){
 		println("
 				'###########################
 				'Calculating metrics for <p>");
-		
 		metrics = getProjectMetrics(projects[p]);
 		for(m <- metrics){
 			println("
@@ -29,6 +28,7 @@ public void main(){
 			println(formatMetric(metrics[m]));
 		}
 	}
+	duplicateIndex = getDuplicateIndex(codeList);
 }
 private map[str,Metric] getProjectMetrics(loc proj){
 	projectModel = createM3FromEclipseProject(proj);
