@@ -35,6 +35,12 @@ private int cyclomaticComplexity(Declaration unit){
 		//the catches are the actual branching statement, so count 1 branch per catch.
 		case \try(_,[*C]): cc += size(C);
 		case \try(_,[*C],_): cc += size(C);
+		//Infix operators (see mccabe pg 315);
+		case \infix(_,"&&",_): cc += 1;
+		case \infix(_,"||",_): cc += 1;
+		//asserts:
+		case \assert(_): cc += 1;
+		case \assert(_,_): cc += 1;
 	}
 	
 	return cc;
@@ -46,16 +52,16 @@ private Declaration emptyMethod	   = \method(\int(), "testMethod", [], [], \empt
 private Declaration simpleMethod   = \method(\int(), "testMethod", [], [], \block([\empty() | i <- [0..19]]));
 private Declaration complexMethod   = \method(\int(), "testMethod", [], []
 									 ,\block([
-									 	\if(\booleanLiteral(true), \empty())                                        //2
-									 	,\if(\booleanLiteral(true), \empty(),\empty())                              //3
-									 	,\try(\empty(),[\catch(\parameter(\int(),"",0),\empty()) | i <- [0..10]])   //13
-									  	,\while(\booleanLiteral(true), \empty())                                    //14
-									  	,\do(\empty(),\booleanLiteral(true))                                        //15
-									  	,\case(\booleanLiteral(true))                                               //16
-									  	,\for([],\null(),[],\empty())                                               //17
-									  	,\for([],[],\empty())                                                       //18
-									  	,\foreach(\parameter(\int(),"",0),\null(),\empty())                         //19
-									  	,\expressionStatement(\conditional(\null(),\null(),\null()))                //20
+									 	\if(\infix(\booleanLiteral(true),"&&",\booleanLiteral(true)), \empty())           //3
+									 	,\if(\infix(\booleanLiteral(true),"||",\booleanLiteral(true)), \empty(),\empty()) //5
+									 	,\try(\empty(),[\catch(\parameter(\int(),"",0),\empty()) | i <- [0..10]])         //15
+									  	,\while(\booleanLiteral(true), \empty())                                          //16
+									  	,\do(\empty(),\booleanLiteral(true))                                              //17
+									  	,\case(\booleanLiteral(true))                                                     //18
+									  	,\for([],\null(),[],\empty())                                                     //19
+									  	,\for([],[],\empty())                                                             //20
+									  	,\foreach(\parameter(\int(),"",0),\null(),\empty())                               //21
+									  	,\expressionStatement(\conditional(\null(),\null(),\null()))                      //22
 									 ]));
 
 //some tests for unitComplexities:
@@ -66,4 +72,4 @@ public test bool testUnitComplexities_nonEmpty() = unitComplexities({<|project:/
 public test bool testCycloComp_abstract() = cyclomaticComplexity(abstractMethod) == 1;
 public test bool testCycloComp_empty() = cyclomaticComplexity(emptyMethod) == 1;
 public test bool testCycloComp_simple() = cyclomaticComplexity(simpleMethod) == 1;
-public test bool testCycloComp_complex() = cyclomaticComplexity(complexMethod) == 20;
+public test bool testCycloComp_complex() = cyclomaticComplexity(complexMethod) == 22;
