@@ -1,4 +1,4 @@
-module util::File
+module series1::util::File
 
 import IO;
 import Set;

@@ -1,4 +1,4 @@
-module util::Metric
+module series1::util::Metric
 
 import List;
 import String;

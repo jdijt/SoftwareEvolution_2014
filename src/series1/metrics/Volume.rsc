@@ -1,4 +1,4 @@
-module metrics::Volume
+module series1::metrics::Volume
 
 import IO;
 import List;
@@ -7,8 +7,8 @@ import String;
 import lang::java::m3::Core;
 import lang::java::jdt::m3::Core;
 
-import metrics::Metric;
-import metrics::Duplicate;
+import series1::metrics::Metric;
+import series1::metrics::Duplicate;
 //Lines of code LOC
 //Man years  MY
 

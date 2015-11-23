@@ -1,4 +1,4 @@
-module metrics::UnitComplexity
+module series1::metrics::UnitComplexity
 
 import List;
 import lang::java::m3::AST;
