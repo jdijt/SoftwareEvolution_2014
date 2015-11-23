@@ -1,4 +1,4 @@
-module util::AST
+module series1::util::AST
 
 import lang::java::m3::AST;
 

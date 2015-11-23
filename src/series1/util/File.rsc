@@ -1,4 +1,4 @@
-module util::File
+module series1::util::File
 
 import IO;
 import Set;
@@ -20,7 +20,7 @@ public map[loc,list[str]] getCleanedProjectFileLines(M3 project){
 	return (file : getCleanedLinesFromFile(file, project@documentation[file+containment_T[file]]) | file <- files(project));
 }
 
-private list[str] getCleanedLinesFromFile(loc f, set[loc] commentLocs){
+public list[str] getCleanedLinesFromFile(loc f, set[loc] commentLocs){
 	lineActions = getCommentLineActions(commentLocs);
 	line = 1;
 	
@@ -40,6 +40,7 @@ private list[str] getCleanedLinesFromFile(loc f, set[loc] commentLocs){
 		if(l != ""){ //ignore empty lines;
 			//Squeeze all sequences of tabs and strings into single spaces.
 			l = squeeze(replaceAll(l,"\t"," ")," ");
+			//println(l);
 			append l;
 		}
 			

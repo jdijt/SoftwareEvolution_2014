@@ -1,4 +1,4 @@
-module Main
+module series1::Main
 
 import IO;
 import util::Math;
@@ -6,13 +6,13 @@ import lang::java::m3::Core;
 import lang::java::jdt::m3::Core;
 import lang::java::jdt::m3::AST;
 
-import util::File;
-import util::AST;
-import util::Metric;
-import metrics::Volume2;
-import metrics::UnitSize;
-import metrics::UnitComplexity;
-import metrics::Duplicate2;
+import series1::util::File;
+import series1::util::AST;
+import series1::util::Metric;
+import series1::metrics::Volume2;
+import series1::metrics::UnitSize;
+import series1::metrics::UnitComplexity;
+import series1::metrics::Duplicate2;
 
 
 

@@ -1,4 +1,4 @@
-module metrics::Duplicate
+module series1::metrics::Duplicate
 
 import IO;
 import Prelude;
