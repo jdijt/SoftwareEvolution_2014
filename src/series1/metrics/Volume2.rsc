@@ -1,4 +1,4 @@
-module metrics::Volume2
+module series1::metrics::Volume2
 
 import List;
 

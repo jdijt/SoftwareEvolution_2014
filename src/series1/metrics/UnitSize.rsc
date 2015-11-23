@@ -1,4 +1,4 @@
-module metrics::UnitSize
+module series1::metrics::UnitSize
 
 import lang::java::m3::AST;
 

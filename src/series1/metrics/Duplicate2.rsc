@@ -1,4 +1,4 @@
-module metrics::Duplicate2
+module series1::metrics::Duplicate2
 
 import IO;
 import List;
