@@ -14,7 +14,6 @@ public MT emptyMT(loc id){
 
 	model@subtrees = {};
 	model@treecontainment = {};
-	model@clones = {};
 	
 	return model;
 }
@@ -33,7 +32,6 @@ public MT createTreeModel(M3 projectModel, Set[Declaration] compunits){
 private MT compose(MT original, MT new){
 	original@subtrees =        original@subtrees + new@subtrees;
 	original@treecontainment = original@treecontainment + new@treecontainment;
-	original@clones =          original@clones + new@clones;
 }
 private MT compose(MT original, MT new1, MT new2) = compose(compose(original, new1), new2);
 private MT compose(MT original, MT new1, MT new2, MT new3) = compose(compose(compose(original, new1), new2), new3);
