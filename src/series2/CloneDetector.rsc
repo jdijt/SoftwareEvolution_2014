@@ -8,7 +8,6 @@ import IO;
 import lang::java::m3::AST;
 
 import series2::AST::Normalizer;
-import series2::AST::Util;
 
 //Parameters:
 int weightThreshold = 5; //minimal number of nodes in a tree.
@@ -57,6 +56,25 @@ public rel[loc,loc] addNewClone(loc n1, loc n2, rel[loc,loc] existingClones, map
 	return existingClones;
 }
 
+public map[loc,node] getSubTrees(set[node] trees){
+
+	map[loc,node] subtrees = ();
+	int skipped = 0;
+	
+	visit(trees) {
+		case d:Declaration _ :{
+			try subtrees[d@src] = d;
+			catch: skipped += 1; //These tend to be \variables and \package declarations. 
+		}
+		case s:Statement _ : subtrees[s@src] = s;
+		
+	};
+	
+	print("getSubTrees:: Skipped <skipped> subtrees without @src annotation.\n");
+	return subtrees;
+}
+
+public int size(node t) = ( 0 | it + 1 | /node _ := t);
 public loc getSrc(Declaration d) = d@src;
 public loc getSrc(Statement s) = s@src;
 public lrel[node,node] hashTrees(map[loc,node] trees) = [<normalizeLeaves(trees[n]), trees[n]> | n <- trees, size(trees[n]) > weightThreshold];
