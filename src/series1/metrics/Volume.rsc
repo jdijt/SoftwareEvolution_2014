@@ -7,7 +7,7 @@ import String;
 import lang::java::m3::Core;
 import lang::java::jdt::m3::Core;
 
-import series1::metrics::Metric;
+import series1::util::Metric;
 import series1::metrics::Duplicate;
 //Lines of code LOC
 //Man years  MY
