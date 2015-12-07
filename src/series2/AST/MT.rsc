@@ -1,7 +1,9 @@
 module series2::AST::MT
 
-import IO;
+import Prelude;
 import lang::java::m3::AST;
+
+import series2::AST::Util;
 
 data MT = mt(loc id);
 
@@ -10,7 +12,7 @@ anno rel[loc parent, loc child] MT@treecontainment;
 anno rel[loc left, loc right]   MT@clones;
 
 public MT emptyMT(loc id){
-	model = mt(projectModel.id);
+	model = mt(id);
 
 	model@subtrees = {};
 	model@treecontainment = {};
@@ -18,11 +20,40 @@ public MT emptyMT(loc id){
 	return model;
 }
 
-public MT createTreeModel(M3 projectModel, Set[Declaration] compunits){
-	model = emptyMT(projectModel.id);
-	
-	for(dec <- compunits){
-		compose(model,generateSubTrees(model.Id, dec));
+//Creates a tree model via breadth first pass over tree.
+public MT createTreeModel(loc parent, set[value] nodes) = (emptyMT(parent) | compose(it, createTreeModel(parent, n)) | n <- nodes);
+public MT createTreeModel(loc parent, list[value] nodes) = (emptyMT(parent) | compose(it, createTreeModel(parent, n)) | n <- nodes);
+public MT createTreeModel(loc parent, value n){
+	model = emptyMT(parent);
+
+	top-down-break visit(n){
+		case d:Declaration _ : {
+			try {
+				decl = valueToDecl(d);
+						
+				model@subtrees += {<decl@src, decl>};
+				model@treecontainment += {<parent,decl@src>};
+				return compose(model, createTreeModel(decl@src, getChildren(decl)));
+			}
+			catch: fail; //Fall trough to node case;
+		}
+		case s:Statement _ : {
+			try {
+				stmnt = valueToStmnt(s);
+				print("Stmnt: <getName(stmnt)>\n");
+				
+				model@subtrees += {<stmnt@src, stmnt>};
+				model@treecontainment += {<parent,stmnt@src>};
+				return compose(model, createTreeModel(stmnt@src, getChildren(stmnt)));
+			}
+			catch: fail; //Fall trough to node case;
+		}
+		case n:node _ :{
+			nod = valueToNode(n);
+			print("Other: <getName(nod)>\n");
+
+			return compose(model, createTreeModel(parent, getChildren(nod)));
+		}
 	}
 	
 	return model;
@@ -30,13 +61,8 @@ public MT createTreeModel(M3 projectModel, Set[Declaration] compunits){
 
 
 private MT compose(MT original, MT new){
-	original@subtrees =        original@subtrees + new@subtrees;
-	original@treecontainment = original@treecontainment + new@treecontainment;
-}
-private MT compose(MT original, MT new1, MT new2) = compose(compose(original, new1), new2);
-private MT compose(MT original, MT new1, MT new2, MT new3) = compose(compose(compose(original, new1), new2), new3);
-private MT compose(MT original, MT new1, MT new2, MT new3, MT new4) = compose(compose(compose(compose(original, new1), new2), new3), new4);
-
-private MT generateSubTrees(loc parent, Declaration d){
+	original@subtrees += new@subtrees;
+	original@treecontainment += new@treecontainment;
 	
+	return original;
 }
