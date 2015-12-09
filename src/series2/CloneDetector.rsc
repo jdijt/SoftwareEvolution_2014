@@ -4,33 +4,68 @@ import Prelude;
 import lang::java::m3::AST;
 import lang::java::m3::Core;
 
-import series2::AST::MT;
+import series2::Util;
+import series2::AST::TM;
 import series2::AST::Util;
 import series2::AST::Normalizer;
 
 //Parameters:
-private int weightThreshold = 16; //minimal number of nodes in a tree.
+private int weightThreshold = 10; //minimal number of nodes in a tree.
 
 public rel[loc,loc] detectClones(M3 projectModel, set[Declaration] decls){
-	treemodel = createTreeModel(projectModel.id, decls);
-	buckets = hashTrees(treemodel@subtrees);
+	print("Parsing trees...\n");
+	treemodel = initTreeModel(projectModel.id, decls);
+	print("Generated <size(treemodel@subtrees)> subtrees.\n");
+	
+	return detectClones(treemodel);
+}
+	
+public rel[loc,loc] detectClones(TM treemodel){
+	print("Creating buckets...\n");
+	filteredHashes = {h | h <- domain(treemodel@hashes), size(h) >= weightThreshold};
+	filteredBuckets = domainR(treemodel@hashes, filteredHashes);
+	print("<size(range(filteredBuckets))> subtrees split over <size(domain(filteredBuckets))> buckets after filtering.\n");
 	
 	treeChildren = treemodel@treecontainment+;
 	treeParents = invert(treemodel@treecontainment)+;
 	
-	return getBasicClones(buckets, treeChildren, treeParents);
+	print("Finding Clones...\n");
+	clones = getBasicClones(filteredBuckets, treeChildren, treeParents);
+	print("Found <size(clones)> clones before merging sequences.");
+	
+	print("Merging sequences...\n");
+	clones = getSequenceClones(clones, treemodel, treeChildren, treeParents);
+	print("Reduced number of clones to: <size(clones)>\n");
+	
+	return clones;
 }
 
-public rel[loc,loc] getBasicClones(lrel[node,node] buckets, rel[loc,loc] parentToChild, rel[loc,loc] childToParent){
+public rel[loc,loc] getBasicClones(rel[node,loc] buckets, rel[loc,loc] parentToChild, rel[loc,loc] childToParent){
 	clones = {};
 	
 	for(hash <- domain(buckets)){
-		<curHead, curTail> = pop(buckets[{hash}]);
+		<curHead, curTail> = takeOneFrom(buckets[hash]);
 		while(size(curTail) > 0){
 			for(other <- curTail){
-				clones = addNewClone(getSrc(curHead), getSrc(other), clones, parentToChild, childToParent);
+				clones = addNewClone(curHead, other, clones, parentToChild, childToParent);
 			}
-			<curHead,curTail> = pop(curTail);
+			<curHead,curTail> = takeOneFrom(curTail);
+		}
+	}
+	
+	return clones;
+}
+
+public rel[loc,loc] getSequenceClones(rel[loc,loc] clones, TM treemodel, rel[loc,loc] parentToChild, rel[loc,loc] childToParent){
+	
+	for(hash <- domain(treemodel@seqhashes)){
+		<curHead,curTail> = takeOneFrom(treemodel@seqhashes[hash]);
+		
+		while(size(curTail) > 0){
+			for(other <- curTail){
+				clones = clones = addNewClone(curHead, other, clones, parentToChild, childToParent);
+			}
+			<curHead,curTail> = takeOneFrom(curTail);
 		}
 	}
 	
@@ -39,24 +74,16 @@ public rel[loc,loc] getBasicClones(lrel[node,node] buckets, rel[loc,loc] parentT
 
 public rel[loc,loc] addNewClone(loc n1, loc n2, rel[loc,loc] existingClones, rel[loc,loc] parentToChild, rel[loc,loc] childToParent){
 	//Is this a subclone of an already known one?
-	parentPairs = {<a, b> | a <- childToParent[n1], b <- childToParent[n2]};
-	if(size(existingClones & parentPairs) > 0){
+	n1Parents = childToParent[n1];
+	n2Parents = childToParent[n2];
+	if((0 | it + 1 |  b <- existingClones[n1Parents], b in n2Parents) > 0){
 		return existingClones;
 	}
 	
-	//Nope: remove subtree clones and an
-	childPairs = {<a,b> | a <- parentToChild[n1], b <- parentToChild[n2]};
-	childPairs += invert(childPairs);
-	
+	//Nope: remove subtree clones and add
+	childPairs = ({} | it + {<a,b>,<b,a>} | <a,b> <- domainR(existingClones, parentToChild[n1]), b in parentToChild[n2]);
 	existingClones -= childPairs;
 	existingClones += {<n1,n2>, <n2,n1>};
 	
-	
 	return existingClones;
 }
-
-
-public int size(node t) = ( 0 | it + 1 | /node _ := t);
-public lrel[node,node] hashTrees(rel[loc,node] trees) = [<normalizeLeaves(t), t> | <_,t> <- trees, size(t) > weightThreshold];
-
-
