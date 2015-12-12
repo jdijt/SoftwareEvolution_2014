@@ -1,0 +1,82 @@
+<!doctype html>
+
+<html>
+
+<head>
+ 
+	<title> Clone Visualization </title>
+
+	<script src="http://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+  
+	<script src="http://cdnjs.cloudflare.com/ajax/libs/raphael/2.1.2/raphael-min.js"></script>
+  
+	<script src="lib/morris.js"></script>
+  
+	<script src="http://cdnjs.cloudflare.com/ajax/libs/prettify/r224/prettify.min.js"></script>
+  
+
+	<link rel="stylesheet" href="http://cdnjs.cloudflare.com/ajax/libs/prettify/r224/prettify.min.css">
+  
+	<link rel="stylesheet" href="lib/morris.css">
+  
+	<link rel="stylesheet" href="lib/carlacss.css">
+  
+
+	<style>
+ 
+	body { background:#ccc; font: 12px sans-serif }
+  
+	</style>
+</head>
+
+
+<body>
+	
+<h1 style="text-align:center;" >UVA - Msc SE -Software Evolution- Jasper & Carla - December 2015 </h1>
+	
+
+	<div id="lines_donut">
+	</div>
+	
+
+
+<script type="text/javascript">	
+	Morris.Donut({
+  
+	 element: 'lines_donut',
+  
+	 data:  [{value: 20, label: 'xxx'},
+{value: 15, label: 'xx1'},
+{value: 10, label: 'xx2'},
+{value: 23, label: 'xx3'},{value: 20, label: 'xx4'},
+{value: 15, label: 'xx5'},
+{value: 10, label: 'xx6'},
+{value: 23, label: 'xx7'},{value: 20, label: 'xx8'},
+{value: 15, label: 'xx9'},
+{value: 10, label: 'x10'},
+{value: 23, label: 'x11'}
+],  
+	 backgroundColor: '#ccc',
+  
+	 labelColor: '#060',
+  
+	 colors: ['#01939A',
+    '#FF69B4'],
+
+         formatter: function (x) { return x + "%"}
+
+	});
+
+
+$(function () {
+  eval($('#code').text());
+  prettyPrint();
+});
+</script>
+
+
+
+</body>
+
+</html>
+
