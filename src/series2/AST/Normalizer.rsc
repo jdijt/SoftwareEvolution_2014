@@ -3,6 +3,8 @@ module series2::AST::Normalizer
 import Prelude;
 import lang::java::m3::AST;
 
+import series2::AST::Util;
+
 private map[loc, Declaration] knownDecls = ();
 private map[loc, Statement] knownStatements = ();
 
@@ -11,16 +13,18 @@ public &T<:node normalizeLeaves(&T<:node n){
 	switch(n){
 		case d:Declaration _ :{
 			try {
-				if(d@src in knownDecls){
-					return knownDecls[d@src];
+				decl = toDeclaration(d);
+				if(decl@src in knownDecls){
+					return knownDecls[decl@src];
 				}
 			}
 			catch: fail;
 		}
 		case s:Statement _ :{
 			try {
-				if(s@src in knownStatements){
-					return knownStatements[s@src];
+				stmnt = toStatement(s);
+				if(stmnt@src in knownStatements){
+					return knownStatements[stmnt@src];
 				}
 			}
 			catch: fail;

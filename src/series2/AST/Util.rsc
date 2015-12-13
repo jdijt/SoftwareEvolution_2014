@@ -2,59 +2,83 @@ module series2::AST::Util
 
 import IO;
 import Prelude;
+import util::Math;
 import lang::java::m3::AST;
 
 
-public Declaration toType(Declaration d) = d;
-public Statement toType(Statement s) = s;
-public node toType(node n) = n;
+public Declaration toDeclaration(Declaration d) = d;
+public Statement toStatement(Statement s) = s;
+public node toNode(node n) = n;
 
-public int size(node t) = ( 0 | it + 1 | /node _ := t);
+public int treeSize(value t) = ( 0 | it + 1 | /node _ := t);
 
-public loc getSrc(Declaration d){
-	try return d@src;
-	catch: {
-		print("<getName(d)>\n");
-		return |file:///foo|;
+public loc getSrc(Declaration d) = d@src?|unknown:///|;
+public loc getSrc(Statement s) = s@src?|unknown:///|;
+public loc getSrc(value v) =  |unknown:///|;
+
+
+public bool isSequence(Declaration decl){
+	switch(decl){
+		case \compilationUnit(_,_): return true;
+		case \compilationUnit(_,_,_): return true;
+		case \enum(_,_,_,_): return true;
+		case \class(_,_,_,_): return true;
+		case \class(_): return true;
+		case \annotationType(_,_): return true;
 	}
+	return false;
 }
-public loc getSrc(Statement s){
-	try return s@src;
-	catch: return |file:///foo|;
+public bool isSequence(Statement stmnt){
+	switch(stmnt){
+		case \block(_): return true;
+		case \switch(_,_): return true;
+		case \try(_,_): return true;
+		case \try(_,_,_): return true;
+	}
+	return false;
 }
-public loc getSrc(value v){
-	return |file:///foo|;
-}
-
-
-public bool isSequence(\compilationUnit(_,_)) = true;
-public bool isSequence(\compilationUnit(_,_,_)) = true;
-public bool isSequence(\enum(_,_,_,_)) = true;
-public bool isSequence(\class(_,_,_,_)) = true;
-public bool isSequence(\class(_)) = true;
-//Not interested in sequences of parameters.
-//public bool isSequence(\method(_,_,_,_,_)) = true;
-//public bool isSequence(\method(_,_,_,_)) = true;
-//public bool isSequence(\constructor(_,_,_,_,_)) = true;
-public bool isSequence(\annotationType(_,_)) = true;
-
-public bool isSequence(\block(_)) = true;
-public bool isSequence(\switch(_,_)) = true;
-public bool isSequence(\try(_,_)) = true;
-public bool isSequence(\try(_,_,_)) = true;
-
 public default bool isSequence(value v) = false;
 
-public set[list[loc]] getSequenceChildLocs(\compilationUnit(is,dd)) = {[c@src | c <- is],[c@src | c <- dd]};
-public set[list[loc]] getSequenceChildLocs(\compilationUnit(_,is,dd)) = {[c@src | c <- is],[c@src | c <- dd]};
-public set[list[loc]] getSequenceChildLocs(\enum(_,_,cs,ds)) = {[c@src | c <- cs],[c@src | c <- ds]};
-public set[list[loc]] getSequenceChildLocs(\class(_,_,_,ds)) = {[c@src | c <- ds]};
-public set[list[loc]] getSequenceChildLocs(\class(ds)) = {[c@src | c <- ds]};
-public set[list[loc]] getSequenceChildLocs(\annotationType(_,ds)) = {[c@src | c <- ds]};
 
-public set[list[loc]] getSequenceChildLocs(\block(s)) = {[c@src | c <- s]};
-public set[list[loc]] getSequenceChildLocs(\switch(_,s)) = {[c@src | c <- s]};
-public set[list[loc]] getSequenceChildLocs(\try(_,s)) = {[c@src | c <- s]};
-public set[list[loc]] getSequenceChildLocs(\try(_,s,_)) = {[c@src | c <- s]};
+public set[list[Declaration]] getSequenceChildren(Declaration d){
+	switch(d){
+		case \compilationUnit(is,dd): return {is,dd};
+		case \compilationUnit(_,is,dd): return {is,dd};
+		case \enum(_,_,cs,ds): return {cs,ds};
+		case \class(_,_,_,ds): return {ds};
+		case \class(ds): return {ds};
+		case \annotationType(_,ds): return {ds};
+	}
+	return {};
+}	
+public set[list[Statement]] getSequenceChildren(Statement stmnt){
+	switch (stmnt){
+		case \try(_,s,_): return {s};
+		case \block(s): return {s};
+		case \switch(_,s): return {s};
+		case \try(_,s): return {s};
+	}
+	return {};
+}
 
 
+public real compareTrees(&T hash, &T left, &T right){
+	leftId = getIdentifiers(left);
+	leftTyp = getTypes(left);
+	rightId = getIdentifiers(right);
+	rightTyp = getTypes(right);
+	
+	common = toReal(size(leftId & rightId) + size(leftTyp & rightTyp) + treeSize(hash));
+	lnotr = toReal(size(leftId - rightId) + size(leftTyp - rightTyp));
+	rnotl = toReal(size(rightId - leftId) + size(rightTyp - leftTyp));
+	
+	
+	if(common == 0){
+		println("<left><right>");
+	}
+	println("result: <((2.0*common)/(2.0*common+lnotr+rnotl))>");
+	return ((2.0*common)/(2.0*common+lnotr+rnotl));
+}
+
+public set[str] getIdentifiers(&T ast) = {s | /s:str _ := ast};
+public set[Type] getTypes(&T ast) = {t | /t:Type _ := ast};

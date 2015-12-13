@@ -1,30 +1,34 @@
 module series2::Util
 
 import Prelude;
+import util::Math;
 
-public list[list[&T]] subSequences([]) = [[]];
-public list[list[&T]] subSequences([&T a]) = [[a]]; 
-public list[list[&T]] subSequences(list[&T] a){
-	return for(sSize <- [size(a)..1], startIdx <- [0..(size(a)-sSize)+1]){
-		append a[startIdx..startIdx+sSize];
+public list[list[&T]] subSequencesR([],_,_) = [[]];
+public list[list[&T]] subSequencesR(_,0,_) = [[]];
+public list[list[&T]] subSequencesR(list[&T] a, 1, _) = [[a]];
+public list[list[&T]] subSequencesR(list[&T] a, int minimum, int limit){
+	if(minimum > limit || size(a) < minimum){
+		return [[]];
+	} else {
+		return for(sSize <- [minimum..min(size(a)+1, limit+1)], startIdx <- [0..(size(a)-sSize)+1]){
+			append a[startIdx..startIdx+sSize];
+		}
 	}
 }
 
-public bool isContainedIn([],_) = true;
-public bool isContainedIn([*a],[]) = false;
-public bool isContainedIn([*a],[*_,a,*_]) = true;
-public bool isContainedIn([*_],[*_]) = false;
+public bool isStrictlyContainedIn([],_) = true;
+public bool isStrictlyContainedIn([*a],[]) = false;
+public bool isStrictlyContainedIn([*a],[a]) = false;
+public bool isStrictlyContainedIn([*a],[*_,a,*_]) = true;
+public bool isStrictlyContainedIn([*_],[*_]) = false;
+
 
 public loc combineLocs([]) = |unknown:///|;
-public loc combineLocs(list[loc] locs){
-	newLoc = locs[0];
-	prevEndOffset = newLoc.offset + newLoc.length;
-	for(l <- locs){
-		endOffset = l.offset+l.length;
-		newLoc.length += (endOffset - prevEndOffset);
-		newLoc.end = l.end;
-		
-		prevEndOffset = endOffset;
-	}
-	return newLoc;
+public loc combineLocs([a]) = a;
+public loc combineLocs(list[loc] l){
+	a = l[0];
+	b = l[size(l)-1];
+	a.length = (b.offset - a.offset) + b.length;
+	a.end = b.end;
+	return a;
 }
