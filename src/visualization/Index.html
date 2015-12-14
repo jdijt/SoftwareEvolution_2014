@@ -1,0 +1,118 @@
+<!doctype html>
+
+<html>
+
+  <head>
+    <title> Clone Visualization </title>
+    <script src="http://code.jquery.com/jquery.min.js"  type="text/javascript" ></script>
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/raphael/2.1.2/raphael-min.js"></script>
+    <script src="lib/morris.js"></script>
+    <script src="lib/carlajs.js"></script>
+    <script src="lib/vis.js"></script>
+
+    <link rel="stylesheet" href="lib/carlacss.css">
+    <link rel="stylesheet" href="lib/morris.css">
+    <link rel="stylesheet" href="lib/vis.css" type="text/css" />
+    <!-- <script type="text/javascript">
+      $(function(){
+        $.getJSON('lib/report.json',function(data){
+            console.log('success');
+            //$.each(data.items,function(data){
+                ; // i dont know, a function
+            var report = data
+            });
+        }).error(function(){
+            console.log('error');
+        });
+       });
+   </script> -->
+
+	<!-- $(function() {
+		$.getJSON("report.json")
+		.fail(function( jqXhr, textStatus, errorThrown ) {
+			console.error("FAILED " + textStatus + ", error: " + errorThrown);
+		})
+		.done(function( data, textStatus, jqXhr ) {
+			var visModel = new VisModel( data );
+			var visualizer = new Visualizer( visModel );
+			var d3Visualizer = new D3Visualizer( visModel );
+		}); -->
+
+
+   <style>
+    body { font: 12px sans-serif }
+   </style>
+  </head>
+
+
+  <body>
+    <h1 style="text-align:center;" >UVA - Msc SE -Software Evolution- Jasper & Carla - December 2015 </h1>
+
+    <h2 style="text-align:left;" >Clone pairs in line project</h2>
+    <div id="ClonePairsGraph"></div>
+
+    <h2 style="text-align:left;" >Clone lines in File</h2>
+    <div id="ClonePerFile"></div>
+
+    <h2 style="text-align:left;" >Clone pairs</h2>
+    <div id="ClonePairsGoogle"></div>
+    <iframe
+        width="1000.6238532110092"
+        height="600.63297216387616"
+        seamless frameborder="0"
+        scrolling="no"
+        src="https://docs.google.com/spreadsheets/d/1quLmXNbgxBWuz8lvse2IfYO9rqT5imLP3MxFSXl0aAo/pubchart?oid=386929493&amp;format=interactive">
+   </iframe>
+
+
+
+        <script type="text/javascript">
+
+        var container = document.getElementById('ClonePairsGraph');
+        var items = [ //report.json
+               {x:683,  y:629},
+               {x:1055, y:200},
+               {x:1452, y:1932},
+               {x:890,  y:1533}
+              ];
+
+        var dataset = new vis.DataSet(items);
+        //var dataset = new vis.DataSet([report.items.x, report.items.y]); // i hope this will work, unable to test yet
+        var options = {
+            sort: true,
+            sampling:false,
+            style:'points',
+            dataAxis:{ left: { range: {min: 0, max: 2000},title: {text:"Line Location in Project"} },
+                       right:{ range: {min: 0, max: 1500 }}
+            },
+
+            drawPoints: {
+                enabled: true,
+                size: 10,
+                style: 'circle' // square, circle
+            },
+            defaultGroup: 'Scatterplot',
+            height: '400px'
+        };
+        var graph2d = new vis.Graph2d(container, dataset, options);
+
+
+        Morris.Bar({
+          element: 'ClonePerFile',
+          //data: [report.items.FileNameX,report.items.LinesInFileX,+'JustLine: 30'+ , report.items.CloneLines],
+          data: [ //report.json
+            {FileNameX:"TestBench.java",      LinesInFileX: 1000, JustLine: 30, CloneLines: 169},
+            {FileNameX:"Logger.java",         LinesInFileX: 850, JustLine: 30, CloneLines: 201},
+            {FileNameX:"StatementDMQL.java",  LinesInFileX: 452, JustLine: 30, CloneLines: 150},
+            {FileNameX:"TimeData.java",       LinesInFileX: 698, JustLine: 30, CloneLines: 34}
+          ],
+          xkey: 'FileNameX',
+          ykeys: ['LinesInFileX', 'JustLine','CloneLines'],
+          labels: ['LinesInFileX', 'JustLine','CloneLines'],
+          stacked: true
+        });
+
+      </script>
+  </body>
+</html>

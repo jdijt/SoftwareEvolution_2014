@@ -1,0 +1,6 @@
+{"items":[
+       {FileName:"TestBench.java - JDBCBench.java",         x:683,  y:629 ,CloneType: Type1, CloneLines:169,FileNameX:"TestBench.java",    LinesInFileX:850 },
+       {FileName:"SqlFile.java - Logger.java",              x:1055, y:200 ,CloneType: Type1, CloneLines:201,FileNameX:"SqlFile.java ",     LinesInFileX:745 },
+       {FileName:"CharacterType.java - TimeData.java ",     x:1452, y:1932,CloneType: Type2, CloneLines:150,FileNameX:"CharacterType.java",LinesInFileX:1000},
+       {FileName:"StatementDMQL.java - StatementDMQL.java ",x:890,  y:1533,CloneType: Type1, CloneLines:89, FileNameX:"StatementDMQL.java",LinesInFileX:1600}
+]}
