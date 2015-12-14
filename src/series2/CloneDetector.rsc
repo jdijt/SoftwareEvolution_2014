@@ -6,7 +6,7 @@ import lang::java::m3::AST;
 import lang::java::m3::Core;
 
 import series2::cfg;
-import series2::Util;
+import series2::utils::Util;
 import series2::AST::TM;
 import series2::AST::Util;
 import series2::AST::Normalizer;
@@ -14,15 +14,16 @@ import series2::AST::Normalizer;
 //Parameters:
 
 public rel[value,loc] detectClones(M3 projectModel, set[Declaration] decls){
-	print("Parsing trees...\n");
+	println("Parsing trees...");
 	treemodel = initTreeModel(projectModel.id, decls);
-	print("Generated <size(treemodel@subtrees)> subtrees.\n");
+	println("Generated: 
+	        '<size(treemodel@hashes)> hashed subtrees.
+	        '<size(treemodel@seqhashes)> hashed sequences.");
 	
 	return detectClones(treemodel);
 }
 	
 public rel[value,loc] detectClones(TM treemodel){
-	
 	treeChildren = treemodel@treecontainment+;
 	treeParents = invert(treemodel@treecontainment)+;
 	
@@ -40,16 +41,16 @@ public rel[value,loc] detectClones(TM treemodel){
 public rel[value,loc] getBasicClones(TM treemodel, rel[loc,loc] parentToChild, rel[loc,loc] childToParent){
 	rel[value,loc] clones = {};
 	
-	hashes = domain(treemodel@hashes);
-	println("Subtrees split over <size(hashes)> buckets after filtering.");
+	hashes = toMap(treemodel@hashes);
+	println("Subtrees split over <size(hashes)> buckets.");
 	
 	for(hash <- hashes){
-		<curHead, curTail> = takeOneFrom(treemodel@hashes[hash]);
+		<curHead, curTail> = takeOneFrom(hashes[hash]);
 		while(size(curTail) > 0){
 			headTree = treemodel@subtrees[curHead];
 			for(other <- curTail){
-				if(compareTrees(hash, headTree, treemodel@subtrees[other]) >= minPercentageShared){
-					//Remove subtrees of other:
+				if(treeSimilarity(toList(headTree), toList(treemodel@subtrees[other])) >= minPercentageShared){
+					//Remove subtrees of clones:
 					clones = rangeX(clones, parentToChild[{other,curHead}]);
 					clones = addClonePair(clones, hash, curHead, other, childToParent);
 				}
@@ -62,28 +63,26 @@ public rel[value,loc] getBasicClones(TM treemodel, rel[loc,loc] parentToChild, r
 }
 
 public rel[value,loc] getSequences(rel[value,loc] clones, TM treemodel, rel[loc,loc] parentToChild, rel[loc,loc] childToParent){
-	seqClones = {};
-	
 	//Remove all sequences that are children of current clones (i.e. already fully cloned).
-	hashes = range(domainX(treemodel@seqhashes, parentToChild[range(clones)]));
+	hashes = toMap(range(domainX(treemodel@seqhashes, parentToChild[range(clones)])));
 	println("<size(range(hashes))> sequences split over <size(domain(hashes))> buckets after filtering.");
 	
 	
-	for(hash <- domain(hashes)){
+	for(hash <- hashes){
 		<curHead,curTail> = takeOneFrom(hashes[hash]);
 		while(size(curTail) > 0){
 			//Remove children of head from clones:
+			headTree = toList(treemodel@subtrees[toSet(curHead)]);
 			for(other <- curTail){
-				if(compareTrees(hash, treemodel@subtrees[toSet(curHead)],treemodel@subtrees[toSet(other)]) >= minPercentageShared){
-					clones = rangeX(clones, parentToChild[toSet(other+curHead) + ]);
-					seqclones += {<hash,combineLocs(curHead)>,<hash,combineLocs(other)>};
+				if(treeSimilarity(headTree,toList(treemodel@subtrees[toSet(other)])) >= minPercentageShared){
+					//remove subtrees of Clones
+					clones = addClonePair(clones, hash, combineLocs(curHead),combineLocs(other), childToParent);
 				}
 			}
 			<curHead,curTail> = takeOneFrom(curTail);
 		}
 	}
-	println("done.");
-	iprintln(range(toMap(seqclones)));
+	
 	return clones;
 }
 
@@ -94,16 +93,8 @@ public rel[value,loc] addClonePair(rel[value,loc] existingClones, value hash, lo
 	existingClonesLocs = range(existingClones);
 	
 	if(size(n1Parents & existingClonesLocs) > 0 && size(n2Parents & existingClonesLocs) > 0){
-		//Parents of both these locs are already clones, don't introducte new subclone.
-		//println("Not adding Pair:
-		//		'<n1>
-		//		'<n2>");
 		return existingClones;
 	} 
-	
-	//println("Adding pair:
-	//		'<n1>
-	//		'<n2>");
 	
 	return existingClones + {<hash, n1>,<hash,n2>};
 }

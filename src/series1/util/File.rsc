@@ -15,7 +15,7 @@ data LineAction =
 //Returns a compilationUnit -> lines map for all compilation units.
 //Blank lines, trailing/leading whitespace & comments removed.
 //Just Code!
-public map[loc,list[str]] getCleanedProjectFileLines(M3 project){
+public map[loc,list[str]] getCleanedProjectFiles(M3 project){
 	containment_T = project@containment+;
 	return (file : getCleanedLinesFromFile(file, project@documentation[file+containment_T[file]]) | file <- files(project));
 }

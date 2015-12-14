@@ -61,24 +61,80 @@ public set[list[Statement]] getSequenceChildren(Statement stmnt){
 	return {};
 }
 
-
-public real compareTrees(&T hash, &T left, &T right){
-	leftId = getIdentifiers(left);
-	leftTyp = getTypes(left);
-	rightId = getIdentifiers(right);
-	rightTyp = getTypes(right);
+//Count tree difference, assumes common structure (i.e.: equal normalized tree).
+/*public real treeDistance(list[node] lns, list[node] rns){
+	leftNodes = sort([<getName(n), intercalate("", sort(getNodeValues(n)))> | /n:node _ := lns]);
+	rightNodes = sort([<getName(n), intercalate("", sort(getNodeValues(n)))> | /n:node _ := rns]);
 	
-	common = toReal(size(leftId & rightId) + size(leftTyp & rightTyp) + treeSize(hash));
-	lnotr = toReal(size(leftId - rightId) + size(leftTyp - rightTyp));
-	rnotl = toReal(size(rightId - leftId) + size(rightTyp - leftTyp));
+	common = 0.0;
+	lnotr = 0.0;
+	rnotl = 0.0;
 	
-	
-	if(common == 0){
-		println("<left><right>");
+	<lh,lrest> = pop(leftNodes);
+	<rh,rrest> = pop(rightNodes);
+	while(size(lrest) != 0 && size(rrest) != 0){
+		if(lh == rh){
+			common += 1;
+			<lh,lrest> = pop(lrest);
+			<rh,rrest> = pop(rrest);
+		} else if(lh > rh){
+			rnotl += 1;
+			<rh,rrest> = pop(rrest);
+		} else if(rh > lh){
+			lnotr += 1;
+			<lh,lrest> = pop(lrest);
+		}
 	}
-	println("result: <((2.0*common)/(2.0*common+lnotr+rnotl))>");
-	return ((2.0*common)/(2.0*common+lnotr+rnotl));
+	lnotr += size(lrest);
+	rnotl += size(rrest);
+	
+	return (2*common)/(2*common + lnotr + rnotl);
+} */
+
+
+public real treeSimilarity(&T <:node left, &T <:node right) = treeSimilarity([left],[right]);
+public real treeSimilarity(list[&T <:node] left, list[&T <:node] right){
+	lEnum = ([] | it + enumerateTree(t) | t <- left);
+	rEnum = ([] | it + enumerateTree(t) | t <- right);
+	lSize = size(lEnum)+1;
+	rSize = size(rEnum)+1;
+	
+	arr = [[0 | x <- [0..rSize]] | y <- [0..lSize]];
+	
+	for(i <- [1..lSize]){
+		arr[i][0] = i;
+	}
+	for(i <- [0..rSize]){
+		arr[0][i] = i;
+	}
+	for(r <- [1..rSize], l <- [1..lSize]){
+		if(rEnum[r-1] == lEnum[l-1]){
+			arr[l][r] = arr[l-1][r-1];
+		} else {
+			arr[l][r] = min([arr[l-1][r]+1, arr[l][r-1]+1, arr[l-1][r-1]+1]);
+		} 
+	}
+	totalSize = toReal(lSize + rSize);
+	return (totalSize - arr[lSize-1][rSize-1]) / totalSize; 
 }
 
-public set[str] getIdentifiers(&T ast) = {s | /s:str _ := ast};
-public set[Type] getTypes(&T ast) = {t | /t:Type _ := ast};
+//Enumerate a tree node-by-node in post-order. (left most lowest leaf first always).
+public list[str] enumerateTree(&T <:node root){
+	result = [];
+	visit(root) {
+		case node n: result += intercalate("",[typeOf(n),getName(n),getNodeValues(n)]);
+	}
+	return result;
+}
+
+public list[value] getNodeValues(&T <:node nod){
+	values = [];
+	for(c <- getChildren(nod)){
+		switch(c){
+			case node n: continue;
+			case list[node] ns: continue;
+			case value v: values += v;
+		}
+	}
+	return values;
+}

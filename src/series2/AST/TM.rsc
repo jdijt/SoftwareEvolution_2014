@@ -4,7 +4,7 @@ import Prelude;
 import lang::java::m3::AST;
 
 import series2::cfg;
-import series2::Util;
+import series2::utils::Util;
 import series2::AST::Util;
 import series2::AST::Normalizer;
 
@@ -14,10 +14,10 @@ public list[int] seqLenghts = [];
 
 data TM = tm(loc id);
  
-anno rel[loc src, node tree]            	TM@subtrees;
-anno rel[node hash, loc src]	         	TM@hashes;
-anno rel[loc parent, loc child]          	TM@treecontainment;
-anno rel[loc src, lrel[node h, loc l] seq]  TM@seqhashes;
+anno rel[loc src, node tree]            	       TM@subtrees;
+anno rel[node hash, loc src]	         	       TM@hashes;
+anno rel[loc parent, loc child]          	       TM@treecontainment;
+anno rel[loc src, tuple[list[node] h, list[loc] l] sseq] TM@seqhashes;
 
 public TM emptyTM(loc id){
 	model = tm(id);
@@ -37,31 +37,16 @@ public TM initTreeModel(loc parent, set[Declaration] ASTs){
 	return model;
 }
 
-private TM createTreeModel(loc parent, set[value] nodes) = (emptyTM(parent) | compose(it, createTreeModel(parent, n)) | n <-nodes);
-private TM createTreeModel(loc parent, list[value] nodes) = (emptyTM(parent) | compose(it, createTreeModel(parent, n)) | n <- nodes);
-private TM createTreeModel(loc parent, node n){
+private TM createTreeModel(loc parent, set[&T] nodes) = (emptyTM(parent) | compose(it, createTreeModel(parent, n)) | n <-nodes);
+private TM createTreeModel(loc parent, list[&T] nodes) = (emptyTM(parent) | compose(it, createTreeModel(parent, n)) | n <- nodes);
+private TM createTreeModel(loc parent, &T<:node n){
 	model = emptyTM(parent);
 	
 	switch(n){
 		case d:Declaration _ : {
 			Declaration decl = toDeclaration(d);
 			if(decl@src?){
-				hash = normalizeLeaves(decl);
-				if(treeSize(hash) >= weightThreshold){
-					model@subtrees += {<decl@src, decl>};
-					model@hashes += {<hash, decl@src>};
-					model@treecontainment += {<parent,decl@src>};
-					if(isSequence(decl)){
-						for( sq <- getSequenceChildren(decl), size(sq) >= minSequenceLength, subsq <- subSequencesR(seq,6,6)){
-							model@treecontainment += {<parent,combineLocs(subsq)>};
-							model@seqhashes += {<decl@src,[<normalizeLeaves(s), s@src> | s<-subsq]>};
-							model@subtrees += {<s@src, s> | s <- subsq};
-						}
-					}
-					return compose(model, createTreeModel(decl@src, getChildren(decl)));
-				} else {
-					return model;
-				}
+				return compose(addSubTreeToModel(model, parent, decl@src, decl), createTreeModel(decl@src,getChildren(decl)));
 			} else {
 				fail; //Fall trough to node case;
 			}
@@ -69,22 +54,7 @@ private TM createTreeModel(loc parent, node n){
 		case s:Statement _ : {
 			Statement stmnt = toStatement(s);
 			if(stmnt@src?){
-				hash = normalizeLeaves(stmnt);
-				if(treeSize(hash) >= weightThreshold){
-					model@subtrees += {<stmnt@src, stmnt>};
-					model@hashes += {<hash, stmnt@src>};
-					model@treecontainment += {<parent,stmnt@src>};
-					if(isSequence(stmnt)){
-						for( sq <- getSequenceChildren(stmnt), size(sq) >= minSequenceLength, subsq <- subSequencesR(seq,6,6)){
-							model@treecontainment += {<parent,combineLocs(subsq)>};
-							model@seqhashes += {<stmnt@src,[<normalizeLeaves(st), st@src> | st <- subsq]>};
-							model@subtrees += {<st@src, st> | st <- subsq};
-						}
-					}
-					return compose(model, createTreeModel(stmnt@src, getChildren(stmnt)));
-				} else {
-					return model;
-				}
+				return compose(addSubTreeToModel(model, parent, stmnt@src, stmnt), createTreeModel(stmnt@src, getChildren(stmnt)));
 			} else {
 				fail;
 			}
@@ -99,6 +69,29 @@ private TM createTreeModel(loc parent, node n){
 }
 private TM createTreeModel(loc parent, value v) = emptyTM(parent);
 
+private TM addSubTreeToModel(TM model, loc parent, loc treeSrc, &T <: node subTree){
+	hash = normalizeLeaves(subTree);
+	tSize = treeSize(hash);
+	if(tSize >= weightThreshold){
+		model@subtrees += {<treeSrc, subTree>};
+		model@hashes += {<hash, treeSrc>};
+		model@treecontainment += {<parent,treeSrc>};
+		if(isSequence(subTree)){
+			model = addSequenceToModel(model, parent, treeSrc, subTree);
+		}	
+	}
+	return model;
+}
+
+private TM addSequenceToModel(TM model, loc parent, loc treeSrc, &T <:node subTree){ 
+	for(sq <- getSequenceChildren(subTree), treeSize(sq) >= minSequenceLength * weightThreshold, subsq <- subSequencesR(sq,minSequenceLength,minSequenceLength)){
+		seqLoc = combineLocs([st@src | st<-subsq]);
+		model@treecontainment += {<parent,seqLoc>};
+		model@seqhashes += {<treeSrc,<[normalizeLeaves(s)|s<-subsq], [s@src | s <- subsq]>>};
+		model@subtrees += {<s@src, s> | s <- subsq};
+	}
+	return model;	
+}
 
 private TM compose(TM original, TM new){
 	original@subtrees += new@subtrees;
