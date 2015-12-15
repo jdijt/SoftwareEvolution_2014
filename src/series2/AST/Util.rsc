@@ -17,7 +17,7 @@ public loc getSrc(Statement s) = s@src?|unknown:///|;
 public loc getSrc(value v) =  |unknown:///|;
 
 
-public bool isSequence(Declaration decl){
+/*public bool isSequence(Declaration decl){
 	switch(decl){
 		case \compilationUnit(_,_): return true;
 		case \compilationUnit(_,_,_): return true;
@@ -27,7 +27,7 @@ public bool isSequence(Declaration decl){
 		case \annotationType(_,_): return true;
 	}
 	return false;
-}
+}*/
 public bool isSequence(Statement stmnt){
 	switch(stmnt){
 		case \block(_): return true;
@@ -40,7 +40,7 @@ public bool isSequence(Statement stmnt){
 public default bool isSequence(value v) = false;
 
 
-public set[list[Declaration]] getSequenceChildren(Declaration d){
+/*public set[list[Declaration]] getSequenceChildren(Declaration d){
 	switch(d){
 		case \compilationUnit(is,dd): return {is,dd};
 		case \compilationUnit(_,is,dd): return {is,dd};
@@ -50,7 +50,7 @@ public set[list[Declaration]] getSequenceChildren(Declaration d){
 		case \annotationType(_,ds): return {ds};
 	}
 	return {};
-}	
+}*/
 public set[list[Statement]] getSequenceChildren(Statement stmnt){
 	switch (stmnt){
 		case \try(_,s,_): return {s};
@@ -60,42 +60,22 @@ public set[list[Statement]] getSequenceChildren(Statement stmnt){
 	}
 	return {};
 }
-
-//Count tree difference, assumes common structure (i.e.: equal normalized tree).
-/*public real treeDistance(list[node] lns, list[node] rns){
-	leftNodes = sort([<getName(n), intercalate("", sort(getNodeValues(n)))> | /n:node _ := lns]);
-	rightNodes = sort([<getName(n), intercalate("", sort(getNodeValues(n)))> | /n:node _ := rns]);
-	
-	common = 0.0;
-	lnotr = 0.0;
-	rnotl = 0.0;
-	
-	<lh,lrest> = pop(leftNodes);
-	<rh,rrest> = pop(rightNodes);
-	while(size(lrest) != 0 && size(rrest) != 0){
-		if(lh == rh){
-			common += 1;
-			<lh,lrest> = pop(lrest);
-			<rh,rrest> = pop(rrest);
-		} else if(lh > rh){
-			rnotl += 1;
-			<rh,rrest> = pop(rrest);
-		} else if(rh > lh){
-			lnotr += 1;
-			<lh,lrest> = pop(lrest);
-		}
-	}
-	lnotr += size(lrest);
-	rnotl += size(rrest);
-	
-	return (2*common)/(2*common + lnotr + rnotl);
-} */
+public default set[list[value]] getSequenceChildren(value v) = {[]};
 
 
 public real treeSimilarity(&T <:node left, &T <:node right) = treeSimilarity([left],[right]);
 public real treeSimilarity(list[&T <:node] left, list[&T <:node] right){
 	lEnum = ([] | it + enumerateTree(t) | t <- left);
 	rEnum = ([] | it + enumerateTree(t) | t <- right);
+	lSize = size(lEnum);
+	rSize = size(rEnum);
+	dist = listDistance(lEnum, rEnum);
+	
+	totalSize = toReal(lSize + rSize);
+	return (totalSize - dist) / totalSize;
+}
+
+public int listDistance(list[str] lEnum, list[str] rEnum){
 	lSize = size(lEnum)+1;
 	rSize = size(rEnum)+1;
 	
@@ -114,15 +94,15 @@ public real treeSimilarity(list[&T <:node] left, list[&T <:node] right){
 			arr[l][r] = min([arr[l-1][r]+1, arr[l][r-1]+1, arr[l-1][r-1]+1]);
 		} 
 	}
-	totalSize = toReal(lSize + rSize);
-	return (totalSize - arr[lSize-1][rSize-1]) / totalSize; 
+	
+	return arr[lSize-1][rSize-1];
 }
 
 //Enumerate a tree node-by-node in post-order. (left most lowest leaf first always).
 public list[str] enumerateTree(&T <:node root){
 	result = [];
 	visit(root) {
-		case node n: result += intercalate("",[typeOf(n),getName(n),getNodeValues(n)]);
+		case node n: result += intercalate("",[getName(n),getNodeValues(n)]);
 	}
 	return result;
 }
@@ -138,3 +118,44 @@ public list[value] getNodeValues(&T <:node nod){
 	}
 	return values;
 }
+
+public test bool testGetSrc(Statement s) = s@src? && getSrc(s) == s@src || getSrc(s) == |unknown:///|;
+public test bool testGetSrc() = getSrc(\int()) == |unknown:///|;
+
+public test bool testNodeValues1() = getNodeValues(\block([\break()])) == []; //no values,
+public test bool testNodeValues2() = getNodeValues(\block([\break("foobar")])) == []; //values in child node.
+public test bool testNodeValues3() = getNodeValues(\label("foo",\label("bar",\break()))) == ["foo"]; //just get parent node value.
+
+//Only generates right for statement? Oh well..
+//Tests both enumerateTree and testSize against each other, both should always take all nodes:
+public test bool testEnumerateTree_treeSize(Statement t) = size(enumerateTree(t)) == treeSize(t);
+
+//Test upper and lower bounds of listDistance:
+//Upper: size of largest input list;
+public test bool testListDistance1(list[str] a, list[str] b) = listDistance(a,b) <= max(size(a),size(b));
+//Lower: 0 if equal.
+public test bool testListDistance2(list[str] a) = listDistance(a,a) == 0;
+
+//Upper bound: 1.0
+public test bool testTreeSimilarity1(Statement a, Statement b) = treeSimilarity(a,b) <= 1.0;
+//Equal: 1.
+public test bool testTreeSimilarity2(Statement a) = treeSimilarity(a,a) == 1.0;
+//Completely nonEqual:
+public test bool testTreeSimilarity3(Statement a) = treeSimilarity([a],[]) == 0.0;
+
+public test bool testGetSequenceChildren1(Statement s){
+	if(getName(s) in {"block","try","switch"}){
+		switch(getSequenceChildren(s)){
+			case {[*Statement _]}: return true;
+		}
+		return false; 
+	} else {
+		return getSequenceChildren(s) == {};
+	}
+}
+public test bool testGetSequenceChildren2(list[Statement] ls, Statement other){
+	parents = {\block(ls), \try(other,ls,other), \try(other,ls), \switch(\null(),ls)};
+	return getSequenceChildren(getOneFrom(parents)) == {ls};
+}
+
+public test bool testIsSequence(Statement s) = (getName(s) in {"block","try","switch"} && isSequence(s)) || !isSequence(s);

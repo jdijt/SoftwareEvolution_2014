@@ -44,25 +44,22 @@ public str fileDataToJSON(<floc,lines,clones>){
 }
 
 public str clonesToHierarchy(curDir, parentToClone){
+	dirs = [];
 	try {
-		dirs = [clonesToHierarchy(c, parentToClone) | c <- curDir.ls, !endsWith(c.file,".java")];
+		dirs = [clonesToHierarchy(c, parentToClone) | c <- curDir.ls, !contains(c.file,".")];
 		dirs = [s | s <- dirs, !isEmpty(s)];
-		fs = [<name,clones> | <name,clones> <- parentToClone[curDir], clones > 0];
-		if(size(fs) > 0 || size(dirs) > 0){
-			return "{\"name\": \"<curDir.file>\",
-			       '\"children\": [
-			       '	<intercalate(",\n", ["{\"name\": \"<name>\", \"size\": <clones>}" | <name,clones> <- fs ])>
-			       '	<size(fs) != 0 && size(dirs) > 0? "," : "">
-			       '    <intercalate(",\n", [s | s <- dirs, !isEmpty(s)])>
-			       ']}";
-        } else {
-        	return "";
-    	}
 	}
-	catch: {
+	catch: dirs = [];
+	
+	fs = [<name,clones> | <name,clones> <- parentToClone[curDir], clones > 0];
+	if(size(fs) > 0 || size(dirs) > 0){
 		return "{\"name\": \"<curDir.file>\",
-	           '\"children\": [
-	           '    <intercalate(",\n", ["{\"name\": \"<name>\", \"size\": <clones>}" | <name,clones> <- parentToClone[curDir]])>
+		       '\"children\": [
+		       '	<intercalate(",\n", ["{\"name\": \"<name>\", \"size\": <clones>}" | <name,clones> <- fs ])>
+		       '	<size(fs) != 0 && size(dirs) > 0? "," : "">
+		       '    <intercalate(",\n", [s | s <- dirs, !isEmpty(s)])>
 		       ']}";
-   } 
+    } else {
+    	return "";
+	}
 }
