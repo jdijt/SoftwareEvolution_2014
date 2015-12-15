@@ -29,10 +29,11 @@ public void main(M3 project, set[Declaration] projectASTs){
 	while(cloneToParent[testLoc] != {}){
 		testLoc = testLoc.parent;
 	}
-	println(testLoc);
 	
 	writeFile(|file:///home/jasper/Development/UVA/rascal-workspace/series1/src/visualization/fileLineData.json|,linesPerFileToJSON(fileData));
 	writeFile(|file:///home/jasper/Development/UVA/rascal-workspace/series1/src/visualization/fileHierData.json|,clonesToHierarchy(testLoc, cloneToParent));
+	
+	iprintln(classSet);
 }
 
 

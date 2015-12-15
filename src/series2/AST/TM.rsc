@@ -30,7 +30,7 @@ public TM emptyTM(loc id){
 	return model;
 }
 
-//Creates a tree model via breadth first pass over tree.
+//Creates a tree model via depth first pass over tree.
 public TM initTreeModel(loc parent, set[Declaration] ASTs){
 	model = createTreeModel(parent, ASTs);
 	clearHashCache();
@@ -84,7 +84,10 @@ private TM addSubTreeToModel(TM model, loc parent, loc treeSrc, &T <: node subTr
 }
 
 private TM addSequenceToModel(TM model, loc parent, loc treeSrc, &T <:node subTree){ 
-	for(sq <- getSequenceChildren(subTree), treeSize(sq) >= minSequenceLength * weightThreshold, subsq <- subSequencesR(sq,minSequenceLength,minSequenceLength)){
+	for(sq <- getSequenceChildren(subTree)
+		, size(sq) >= minSequenceLength
+		, treeSize(sq) >= minSequenceLength * weightThreshold
+		, subsq <- subSequencesR(sq,minSequenceLength,minSequenceLength)){
 		seqLoc = combineLocs([st@src | st<-subsq]);
 		model@treecontainment += {<parent,seqLoc>};
 		model@seqhashes += {<treeSrc,<[normalizeLeaves(s)|s<-subsq], [s@src | s <- subsq]>>};
@@ -100,4 +103,51 @@ private TM compose(TM original, TM new){
 	original@seqhashes += new@seqhashes;
 	
 	return original;
+}
+
+public test bool testEmptyTMAnnotations(){
+	//Check if all annotations initialized to empty set/list/wtvr:
+	m = emptyTM(|unknown:///|);
+	for(a <- range(getAnnotations(m))){
+		if(a != {}){
+			return false;
+		}
+	}
+	return true;
+}
+public test bool testEmptyTMId(loc id) = emptyTM(id).id == id;
+
+public test bool testComposeOwn(loc l, rel[loc,Statement] st, rel[Statement,loc] h, rel[loc,loc] tc, rel[loc,tuple[list[node],list[loc]]] sh){
+	m = emptyTM(l);
+	m@subtrees = st;
+	m@hashes = h;
+	m@treecontainment = tc;
+	m@seqhashes = sh;
+	
+	return m == compose(m,m);
+} 
+public test bool testComposeOrigLoc(loc a, loc b) = compose(emptyTM(a),emptyTM(b)).id == a;
+
+public test bool testAddSequenceToModel(loc parent, loc treeSrc, list[Statement] seq){
+	parentStmnt = \block(seq);
+	//Set config to friendly for easyer testing:
+	om = emptyTM(parent);
+	m = addSequenceToModel(om, parent, treeSrc, parentStmnt);
+	//Check adding:
+	result = size(m@treecontainment) >= size(om@treecontainment);
+	result = result && size(m@seqhashes) >= size(om@seqhashes);
+	result = result && size(m@subtrees) >= size(om@subtrees);
+	
+	return result;
+}
+
+public test bool testAddSubTreeToModel(loc parent, loc treeSrc, Statement tree){
+	om = emptyTM(parent);
+	m = addSubTreeToModel(om, parent, treeSrc, tree);
+		
+	result = size(m@subtrees) >= size(om@subtrees);
+	result = result && size(m@hashes) >= size(om@hashes);
+	result = result && size(m@treecontainment) >= size(om@treecontainment);	
+
+	return result;
 }

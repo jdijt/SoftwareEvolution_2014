@@ -20,11 +20,14 @@ public list[list[&T]] subSequencesR(list[&T] a, int minimum, int limit){
 public loc combineLocs([]) = |unknown:///|;
 public loc combineLocs([a]) = a;
 public loc combineLocs(list[loc] l){
-	a = l[0];
-	b = l[size(l)-1];
-	a.length = (b.offset - a.offset) + b.length;
-	a.end = b.end;
-	return a;
+	try {
+		a = l[0];
+		b = l[size(l)-1];
+		a.length = (b.offset - a.offset) + b.length;
+		a.end = b.end;
+		return a;
+	}
+	catch: return |unknown:///|;
 }
 
 
