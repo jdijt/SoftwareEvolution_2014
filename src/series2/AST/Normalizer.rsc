@@ -130,10 +130,11 @@ private Statement replaceNode(Statement stmnt){
 }
 
 //Basic case:
-public test bool normalizeTypeTest1() = normalizeLeaves(qualifiedType(\int(), \null())) == simpleType(\simpleName(""));
+public test bool normalizeTypeTest1() = normalizeLeaves(qualifiedType(wildcard(), \null())) == simpleType(\simpleName(""));
 //Should be left partially alone:
-public test bool normalizeTypeTest2() = normalizeLeaves(arrayType(\int())) == arrayType(simpleType(\simpleName("")));
-public test bool normalizeTypeTest3() = normalizeLeaves(parameterizedType(\int())) == parameterizedType(\simpleType(\simpleName("")));
-public test bool normalizeTypeTest4() = normalizeLeaves(unionType([\int()])) == unionType([simpleType(\simpleName(""))]);
+public test bool normalizeTypeTest2() = normalizeLeaves(arrayType(wildcard())) == arrayType(simpleType(\simpleName("")));
+public test bool normalizeTypeTest3() = normalizeLeaves(parameterizedType(wildcard())) == parameterizedType(\simpleType(\simpleName("")));
+public test bool normalizeTypeTest4() = normalizeLeaves(unionType([wildcard()])) == unionType([simpleType(\simpleName(""))]);
 
-
+//Generates trees of just statements, all str identifiers should be "" (if any present at all), =>, size of set should be <= 1;
+public test bool normalizeTest(Statement s) = size({ s | /str s := normalizeLeaves(s)}) <= 1;
